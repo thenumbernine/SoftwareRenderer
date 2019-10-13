@@ -1,5 +1,4 @@
-#include "objinst.h"
-#include <stdio.h>
+#include "ObjInst.h"
 
 #include "sw.h"
 
@@ -20,7 +19,7 @@ void ObjInst::reset() {
 	scale = vec3f(1,1,1);
 
 	//title
-	sprintf(title, "obj %d\n", objIndex++);
+	title = std::string("obj ") + std::to_string(objIndex++);
 }
 
 void ObjInst::unload() {
@@ -40,7 +39,7 @@ bool ObjInst::setModel(ObjFile *model) {
 	//if we're null then dont calc visibility
 	if (!model) return true;
 
-	strncpy(title, model->getTitle(), sizeof(title));
+	title = model->getTitle();
 
 	return true;
 }

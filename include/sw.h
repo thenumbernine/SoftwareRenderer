@@ -196,6 +196,8 @@ void swWriteFramebufferBMP(char *filename );
 //TODO - replace this with a GLUT-style loop
 void swWindow_NoGL_Update();
 
+extern long* swBMPBuffer;
+
 //#ifdef __cplusplus
 //}
 //#endif

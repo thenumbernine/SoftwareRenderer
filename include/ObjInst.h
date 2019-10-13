@@ -1,8 +1,10 @@
 #pragma once
 
+#include <string>
+
 //#include "texture.h"
 #include "vec.h"
-#include "objfile.h"
+#include "ObjFile.h"
 
 /**
  * our object instance's material settings:
@@ -49,7 +51,7 @@ class ObjInst {
 
 	void	reset();
 
-	char	title[256];
+	std::string title;
 
 public:
 
@@ -79,5 +81,5 @@ public:
 	ObjFile *getModel() const { return model; }
 	bool setModel(ObjFile *model);
 
-	const char *getTitle() { return title; }
+	const std::string& getTitle() { return title; }
 };

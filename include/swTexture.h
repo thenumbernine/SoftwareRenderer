@@ -81,7 +81,7 @@ typedef SWImageND<2> SWImage2D;
 typedef SWImageND<3> SWImage3D;
 
 template <>
-void SWImageND<1>::getTexCoordColor(
+inline void SWImageND<1>::getTexCoordColor(
 	const vec3fixed &texcoord,	//texcoord in affine space
 	int *c) const				//result color array of 3
 {
@@ -126,7 +126,7 @@ void SWImageND<1>::getTexCoordColor(
 }
 
 template <>
-void SWImageND<2>::getTexCoordColor(
+inline void SWImageND<2>::getTexCoordColor(
 	const vec3fixed &texcoord,	//texcoord in affine space
 	int *c) const				//result color array of 3
 {
@@ -185,7 +185,7 @@ void SWImageND<2>::getTexCoordColor(
 }
 
 template <>
-void SWImageND<3>::getTexCoordColor(
+inline void SWImageND<3>::getTexCoordColor(
 	const vec3fixed &texcoord,	//texcoord in affine space
 	int *c) const				//result color array of 3
 {

@@ -1,6 +1,7 @@
 #include "sw.h"
 #include "swMain.h"
 
+#include <memory.h>
 #include <assert.h>
 
 #include <stdio.h>
@@ -127,7 +128,7 @@ static int /* SWWriteMode */ SWCurrentMode;
 swImage SWCurrentImage;
 
 long *swBMPBuffer = NULL;
-BITMAPINFO swCurrentBMI;
+//BITMAPINFO swCurrentBMI;
 
 float *swDepthBuffer = NULL;
 
@@ -175,6 +176,7 @@ void swEndGraphics ( )
 	swImageDestroy( &SWCurrentImage );
 }
 
+#if 0
 static HBITMAP swHBitmap = NULL;
 static HBITMAP swHOldBitmap = NULL;
 static HWND swHWnd = NULL;
@@ -240,8 +242,10 @@ void swWindow_Init(HWND hWnd) {
 	swImageInit( &SWCurrentImage );
 	swImageSetSize( &SWCurrentImage, swWindowWidth, swWindowHeight );
 }
+#endif
 
 void swWindow_Paint() {
+#if 0	
 	static PAINTSTRUCT swWindowPaintStruct;
 
 	assert(swHWnd);
@@ -252,9 +256,11 @@ void swWindow_Paint() {
 		swHDCBackBuffer, 0, 0, SRCCOPY);
 
 	EndPaint(swHWnd, &swWindowPaintStruct);
+#endif
 }
 
 void swWindow_Resize(int w, int h) {
+#if 0	
 	assert(swHWnd);
 
 	//get our sizes
@@ -290,9 +296,11 @@ void swWindow_Resize(int w, int h) {
 	//and now for something completely different:
 	//our sw graphics code:
 	swImageSetSize( &SWCurrentImage, swWindowWidth, swWindowHeight );
+#endif
 }
 
 void swWindow_Destroy() {
+#if 0	
 	//restore the dc's old bitmap
 	SelectObject(swHDCBackBuffer, swHOldBitmap);
 
@@ -306,6 +314,7 @@ void swWindow_Destroy() {
 		delete[] swDepthBuffer;
 		swDepthBuffer = NULL;
 	}
+#endif
 }
 
 #include <math.h>
@@ -316,6 +325,7 @@ static float swClearDepthValue = 0.f;
 
 void swClear (int bits) {
 
+#if 0
 	const int size = swCurrentBMI.bmiHeader.biWidth * swCurrentBMI.bmiHeader.biHeight * sizeof(long);
 
 	if (bits & SW_COLOR_BUFFER_BIT && swBMPBuffer) {
@@ -337,8 +347,9 @@ void swClear (int bits) {
 	//for some odd reason, these memsets only look at the first 8 bits of the 32-bit fill value passed.  WHY?!?!?!
 
 	if (bits & SW_DEPTH_BUFFER_BIT && swDepthBuffer) {
-		memset(swDepthBuffer, 0 /*0x7f /* *(int *)&swClearDepthValue >> 24*/, size);
+		memset(swDepthBuffer, 0 /*0x7f / * *(int *)&swClearDepthValue >> 24*/, size);
 	}
+#endif
 }
 
 void swClearColor (float r, float g, float b, float a) {
@@ -379,6 +390,7 @@ void swWriteFramebuffer ( char *filename ) {
 
 
 void swWriteFramebufferBMP ( char *filename ) {
+#if 0	
 	//write out the bitmap
 	FILE *fp = fopen(filename, "w");
 	if (!fp) return;
@@ -406,10 +418,12 @@ void swWriteFramebufferBMP ( char *filename ) {
 	}
 
 	fclose(fp);
+#endif
 }
 
 void swWritePixel ( int x, int y, int r, int g, int b )
 {
+#if 0	
 	int or, og, ob;
 
 //	printf("SWCurrentImage.h: %d\n", SWCurrentImage.h);
@@ -449,6 +463,7 @@ void swWritePixel ( int x, int y, int r, int g, int b )
 	}
 
 	swImageWritePixel( &SWCurrentImage, x, y, r, g, b );
+#endif
 }
 
 void swRedraw ( void )

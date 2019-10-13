@@ -1,5 +1,5 @@
-#include <windows.h>
 #include <assert.h>
+#include <memory.h>
 
 #include "sw.h"
 #include "swMain.h"
@@ -103,7 +103,7 @@ static inline void drawPolygons_buildEdgeTable(
 		//TODO - interpolate Y values as we calculate them - depending upon srcFrac and destFrac
 
 		//grab an empty edge off the edge table list
-		assert(edgeBufferSize < numberof(edgeBuffer));
+		assert(edgeBufferSize < (int)numberof(edgeBuffer));
 		edge_t *e = edgeBuffer + edgeBufferSize;
 		edgeBufferSize++;
 
@@ -380,8 +380,8 @@ void swDrawPolygons() {
 	int useDepthTest = swDepthBuffer && getSWStateBit(SW_BIT_DEPTH_TEST);
 	int useBlend = getSWStateBit(SW_BIT_BLEND);
 
-	if (edgeTableSize != swCurrentBMI.bmiHeader.biHeight) {
-		edgeTableSize = swCurrentBMI.bmiHeader.biHeight;
+	if (edgeTableSize != SWCurrentImage.h) {
+		edgeTableSize = SWCurrentImage.h;
 		if (edgeTable) delete[] edgeTable;
 		edgeTable = (edgeTableSize > 0) ? new edge_t *[edgeTableSize] : NULL;
 		if (edgeTable) {
@@ -436,7 +436,7 @@ void swDrawPolygons() {
 	drawPolygons_buildEdgeTable(ymin, ymax);
 
 	int y = ymin;
-	int rowIndex = y * swCurrentBMI.bmiHeader.biWidth;
+	int rowIndex = y * SWCurrentImage.w;
 	long *rowBuffer = swBMPBuffer + rowIndex;
 	float *rowDepthBuffer = swDepthBuffer + rowIndex;
 
@@ -537,7 +537,7 @@ void swDrawPolygons() {
 				while (eb) {
 
 					//test right hand side of the screen scanline
-					if (x >= swCurrentBMI.bmiHeader.biWidth) break;
+					if (x >= SWCurrentImage.w) break;
 
 					if (x >= (int)eb->x) {
 						ea = ea->next;
@@ -567,7 +567,7 @@ void swDrawPolygons() {
 						continue;	//reloop & recalc
 					}
 
-					assert(x >= 0 && x < swCurrentBMI.bmiHeader.biWidth);
+					assert(x >= 0 && x < SWCurrentImage.w);
 					{
 
 						//if the current depth is greater than written depth
@@ -634,8 +634,8 @@ void swDrawPolygons() {
 		//increment scanline #
 		y++;
 
-		rowBuffer += swCurrentBMI.bmiHeader.biWidth;
-		rowDepthBuffer += swCurrentBMI.bmiHeader.biWidth;
+		rowBuffer += SWCurrentImage.w;
+		rowDepthBuffer += SWCurrentImage.w;
 
 //		//update 'x's for each edge
 		for (edge_t *e = aetFirst; e; e = e->next) {
@@ -756,10 +756,10 @@ void swDrawLine(Vertex v0, Vertex v1) {
 
 		int ix = (int)v.x;
 		int iy = (int)v.y;
-		if (ix >= 0 && ix < swCurrentBMI.bmiHeader.biWidth &&
-			iy >= 0 && iy < swCurrentBMI.bmiHeader.biHeight)
+		if (ix >= 0 && ix < SWCurrentImage.w &&
+			iy >= 0 && iy < SWCurrentImage.h)
 		{
-			int index = ix + iy * swCurrentBMI.bmiHeader.biWidth;
+			int index = ix + iy * SWCurrentImage.w;
 			long *colBMPBuffer = swBMPBuffer + index;
 
 			float *colDepthBuffer = swDepthBuffer + index;
