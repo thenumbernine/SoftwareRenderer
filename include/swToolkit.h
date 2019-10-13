@@ -21,6 +21,7 @@ void swutInitDisplayMode(int flags);		//nothing yet
 void swutInitWindowSize(int width, int height);
 void swutInitWindowPosition(int x, int y);
 void swutCreateWindow(const char *title);
+void swutDestroyWindow();
 void swutSetWindowTitle(const char *title);
 void swutSwapBuffers();
 

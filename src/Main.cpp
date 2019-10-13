@@ -492,5 +492,7 @@ int main(int argc, char ** argv) {
 
 	shutdown();
 
+	swutDestroyWindow();
+
 	return 0;
 }
