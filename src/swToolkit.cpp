@@ -16,7 +16,7 @@ int swutWindowY = 1;
 int swutModifiers = 0;
 
 //organize these better
-static const char *swutWindowClassName = "SWUTWindowClass";
+//static const char *swutWindowClassName = "SWUTWindowClass";
 ///*static*/ HWND swutWindow = NULL;
 //static WNDCLASSEX swutWindowClass;
 
@@ -247,10 +247,10 @@ static void swutWindow_Shutdown() {
 
 void swutCreateWindow(const char *name) {
 
+#if 0
 	//first create a window class
 	if (!swutWindow_InitClass()) return;
 
-#if 0
 	//resize the window ?
 	RECT rect;
 	rect.left = 0;
@@ -269,20 +269,18 @@ void swutCreateWindow(const char *name) {
 }
 
 void swutSetWindowTitle(const char *title) {
-	if (!swutWindow) return;
+//	if (!swutWindow) return;
 //	SetWindowText(swutWindow, title);
 }
 
 void swutMainLoop() {
 
-	MSG msg;
-
 	bool done = false;
 
 	//if reshape then do so
 	if (swutCallbackReshape) {
-		int w,h;
-
+#if 0
+		int w = 0, h = 0;
 		if (swutWindow) {
 			RECT rect;
 			GetClientRect(swutWindow, &rect);
@@ -291,7 +289,7 @@ void swutMainLoop() {
 		}
 
 		swutCallbackReshape(w, h);
-
+#endif
 	}
 
 	//if display then do so
@@ -301,7 +299,8 @@ void swutMainLoop() {
 
 	 //while windows is looping...
 	while (!done) {
-
+#if 0
+		MSG msg;
 		//cycle through all messages and process them
 		while ( PeekMessage( &msg, swutWindow, 0, 0, PM_REMOVE ) )  {
 			if( msg.message == WM_QUIT )  {
@@ -311,6 +310,7 @@ void swutMainLoop() {
 				DispatchMessage( &msg );
 			}
 		}
+#endif
 
 		if (swutCallbackIdle) {
 			swutCallbackIdle();
@@ -324,8 +324,8 @@ void swutMainLoop() {
 }
 
 void swutPostRedisplay() {
-	InvalidateRect(swutWindow, NULL, TRUE);
-	UpdateWindow(swutWindow);
+//	InvalidateRect(swutWindow, NULL, TRUE);
+//	UpdateWindow(swutWindow);
 }
 
 int swutGetModifiers() {
@@ -334,6 +334,6 @@ int swutGetModifiers() {
 
 void swutSwapBuffers() {
 	//force a WM_PAINT
-	InvalidateRect(swutWindow, NULL, TRUE);
-	UpdateWindow(swutWindow);
+//	InvalidateRect(swutWindow, NULL, TRUE);
+//	UpdateWindow(swutWindow);
 }

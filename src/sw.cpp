@@ -1,4 +1,3 @@
-#include <windows.h>
 #include "sw.h"
 #include "swMain.h"
 
