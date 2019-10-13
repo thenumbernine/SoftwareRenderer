@@ -1,0 +1,46 @@
+#include "objinst.h"
+#include <stdio.h>
+
+#include "sw.h"
+
+void Material::setup(int face) {
+}
+
+static int objIndex = 0;
+
+void ObjInst::reset() {
+	model = NULL;
+
+	//rendering
+	mat.diff = vec4f(1,1,1,1);
+ 
+	//transformations
+	basis.t = vec3f(0,0,0);
+	basis.r = quat4fIdentity;
+	scale = vec3f(1,1,1);
+
+	//title
+	sprintf(title, "obj %d\n", objIndex++);
+}
+
+void ObjInst::unload() {
+	reset();
+}
+
+void ObjInst::render() {
+	if (!model) return;
+	model->render();
+}
+
+bool ObjInst::setModel(ObjFile *model) {
+
+	//set the new model
+	this->model = model;
+
+	//if we're null then dont calc visibility
+	if (!model) return true;
+
+	strncpy(title, model->getTitle(), sizeof(title));
+
+	return true;
+}
