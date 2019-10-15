@@ -447,7 +447,6 @@ void Q1ModelScene::update() {
 		DispatchMessage( &msg );
 	}
 #else
-	std::cout << "TODO" << std::endl;
 #endif
 }
 	
@@ -511,8 +510,8 @@ void Q1ModelScene::render(const Viewport *viewport, const View *view) {
 	unsigned int texBorderOp = (unsigned int)-1;
 
 	switch (borderMode[0]) {
-	case IDC_RADIO_BOR_U_REP:	texBorderOp = SW_REPEAT;	break;
-	case IDC_RADIO_BOR_U_CLMP:	texBorderOp = SW_CLAMP;	break;
+	case IDC_RADIO_BOR_U_REP:	texBorderOp = SW_REPEAT; break;
+	case IDC_RADIO_BOR_U_CLMP:	texBorderOp = SW_CLAMP; break;
 	}
 
 	if (texBorderOp != (unsigned int)-1) {
@@ -526,8 +525,8 @@ void Q1ModelScene::render(const Viewport *viewport, const View *view) {
 	texBorderOp = (unsigned int)-1;
 
 	switch (borderMode[1]) {
-	case IDC_RADIO_BOR_V_REP:	texBorderOp = SW_REPEAT;	break;
-	case IDC_RADIO_BOR_V_CLMP:	texBorderOp = SW_CLAMP;	break;
+	case IDC_RADIO_BOR_V_REP:	texBorderOp = SW_REPEAT; break;
+	case IDC_RADIO_BOR_V_CLMP:	texBorderOp = SW_CLAMP; break;
 	}
 
 	if (texBorderOp != (unsigned int)-1) {
@@ -541,8 +540,8 @@ void Q1ModelScene::render(const Viewport *viewport, const View *view) {
 	texBorderOp = (unsigned int)-1;
 
 	switch (borderMode[2]) {
-	case IDC_RADIO_BOR_W_REP:	texBorderOp = SW_REPEAT;	break;
-	case IDC_RADIO_BOR_W_CLMP:	texBorderOp = SW_CLAMP;	break;
+	case IDC_RADIO_BOR_W_REP:	texBorderOp = SW_REPEAT; break;
+	case IDC_RADIO_BOR_W_CLMP:	texBorderOp = SW_CLAMP; break;
 	}
 
 	if (texBorderOp != (unsigned int)-1) {
@@ -555,8 +554,8 @@ void Q1ModelScene::render(const Viewport *viewport, const View *view) {
 
 	unsigned int texFilter = (unsigned int)-1;
 	switch (filterMode) {
-	case IDC_RADIO_FIL_NEAR:	texFilter = SW_NEAREST;	break;
-	case IDC_RADIO_FIL_LIN:		texFilter = SW_LINEAR;		break;
+	case IDC_RADIO_FIL_NEAR:	texFilter = SW_NEAREST; break;
+	case IDC_RADIO_FIL_LIN:		texFilter = SW_LINEAR; break;
 	}
 
 	if (texFilter != (unsigned int)-1) {
@@ -575,10 +574,10 @@ void Q1ModelScene::render(const Viewport *viewport, const View *view) {
 	unsigned int texGenMode = (unsigned int)-1;
 
 	switch(renderMode) {
-	case IDC_RADIO_REN_LINEAR:	texGenMode = SW_OBJECT_LINEAR;		break;
-	case IDC_RADIO_REN_CYL:		texGenMode = SW_OBJECT_CYLINDER;	break;
-	case IDC_RADIO_REN_SPH:		texGenMode = SW_OBJECT_SPHERE;		break;
-	case IDC_RADIO_REN_CEL:		texGenMode = SW_NORMAL_MAP;		break;
+	case IDC_RADIO_REN_LINEAR:	texGenMode = SW_OBJECT_LINEAR; break;
+	case IDC_RADIO_REN_CYL:		texGenMode = SW_OBJECT_CYLINDER; break;
+	case IDC_RADIO_REN_SPH:		texGenMode = SW_OBJECT_SPHERE; break;
+	case IDC_RADIO_REN_CEL:		texGenMode = SW_NORMAL_MAP; break;
 		//todo - introduce SW_REFLECTION_MAP
 
 	case IDC_RADIO_REN_NONE:

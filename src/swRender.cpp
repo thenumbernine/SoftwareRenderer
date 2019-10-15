@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <memory.h>
+#include <iostream>
 
 #include "sw.h"
 #include "swMain.h"
@@ -367,7 +368,6 @@ static inline void drawPolygon_calcColor(
 }
 
 void swDrawPolygons() {
-
 	if (!swBMPBuffer) return;
 
 	//get the # of vertices

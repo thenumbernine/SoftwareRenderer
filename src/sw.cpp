@@ -10,6 +10,8 @@
 #include "Main.h"
 #include "vec.h"
 
+#include "swToolkit.h"
+
 typedef unsigned char Byte;
 
 
@@ -362,11 +364,7 @@ void swClearDepth (double depth) {
 
 void swFlush ()
 {
-
-//is there a better way to request a repaint?
-//	InvalidateRect(swHWnd, NULL, TRUE);
-//	UpdateWindow(swHWnd);
-
+	swutPostRedisplay();
 }
 
 void swSetWriteMode ( int /* SWWriteMode */ mode )
@@ -374,55 +372,22 @@ void swSetWriteMode ( int /* SWWriteMode */ mode )
 	SWCurrentMode = mode;
 }
 
+//not called
+void swWriteFramebuffer ( char *filename ) {
+}
+
+//not called
+void swWriteFramebufferBMP ( char *filename ) {
+}
+
 inline int swXOR ( int a, int b ) {
 	return ( a ^ b);
 }
 
-void swWriteFramebuffer ( char *filename ) {
-	FILE *fp;
-	fp = swImageWritePPM ( &SWCurrentImage, filename );
-	if ( ! fp ) {
-		fprintf( stderr, "Frame Buffer Write Error!  Buffer not written.\n" );
-	}
-}
-
-
-
-
-void swWriteFramebufferBMP ( char *filename ) {
-#if 0	
-	//write out the bitmap
-	FILE *fp = fopen(filename, "w");
-	if (!fp) return;
-
-	swCurrentBMI.bmiHeader.biSize = sizeof(swCurrentBMI.bmiHeader);
-
-	//write out the goods
-	BITMAPFILEHEADER h = {
-		0x4d42,	//bfType,
-		  sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER) + swCurrentBMI.bmiHeader.biSizeImage,
-		0,
-		0,
-		sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER)
-	};
-
-	BITMAPINFOHEADER bmih = swCurrentBMI.bmiHeader;
-	bmih.biBitCount = 24;
-	bmih.biSizeImage = bmih.biWidth * bmih.biHeight * 3;
-
-
-	fwrite(&h, sizeof(h), 1, fp);
-	fwrite(&bmih, sizeof(BITMAPINFOHEADER), 1, fp);
-	for (int i = 0; i < bmih.biHeight * bmih.biWidth; i++) {
-		fwrite(swBMPBuffer + i, 3, 1, fp);
-	}
-
-	fclose(fp);
-#endif
-}
-
+//called by swRender
 void swWritePixel ( int x, int y, int r, int g, int b )
 {
+printf("here\n");
 #if 0	
 	int or, og, ob;
 
@@ -464,64 +429,5 @@ void swWritePixel ( int x, int y, int r, int g, int b )
 
 	swImageWritePixel( &SWCurrentImage, x, y, r, g, b );
 #endif
-}
-
-void swRedraw ( void )
-{
-
-//	//is there a better way to request a repaint?
-//	InvalidateRect(displayWnd, NULL, TRUE);
-//	UpdateWindow(displayWnd);
-
-}
-
-//void swWindowNoGL_Loop() {
-//
-//	MSG msg;
-//
-//	bool done = false;
-//
-//	 //while windows is looping...
-//	 while (!done) {
-//					
-//		//cycle through all messages and process them
-//		while( PeekMessage( &msg, NULL, 0, 0, PM_REMOVE ) )  {
-//			if( msg.message == WM_QUIT )  {
-//				done = true;
-//			} else {
-//				TranslateMessage( &msg );
-//				DispatchMessage( &msg );
-//			}
-//		}
-//
-//		//and update our stuff... once we need to
-//
-//		//here's some code to update the window every frame...  if we ever need it
-//		//InvalidateRect(displayWnd, NULL, TRUE);
-//		//UpdateWindow(displayWnd);
-//						
-//	}
-//
-//	UnregisterClass( windowClassName, winclass.hInstance );
-//}
-//
-//void swWindow_NoGL_Update() {
-//
-//	MSG msg;
-//
-//	//cycle through all messages and process them
-//	while( PeekMessage( &msg, NULL, 0, 0, PM_REMOVE ) )  {
-//		TranslateMessage( &msg );
-//		DispatchMessage( &msg );
-//	}
-//}
-
-//fading this routine out - moving its equivalent into sw
-void swWaitOnEscape ()
-{
-
-//	swWindowNoGL_Loop();
-
-//	winLoop();
 }
 

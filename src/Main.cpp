@@ -1,5 +1,6 @@
 #include <vector>
 
+#include <iostream>
 #include <stdio.h>
 //#include <direct.h>
 #include <time.h>
@@ -109,9 +110,10 @@ void display() {
 		frames++;
 		clock_t thisSec = clock();
 		if (thisSec > lastSec + CLOCKS_PER_SEC) {
-			char buffer[256];
-			sprintf(buffer, "Software Renderer - %f FPS", (float)(frames * CLOCKS_PER_SEC) / (float)(thisSec - lastSec));
-			swutSetWindowTitle(buffer);
+			std::string s = "Software Renderer - "
+				+ std::to_string( (float)(frames * CLOCKS_PER_SEC) / (float)(thisSec - lastSec) )
+				+ " FPS"; 
+			swutSetWindowTitle(s.c_str());
 
 			lastSec = thisSec;
 			frames = 0;
