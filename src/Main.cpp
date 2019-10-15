@@ -271,7 +271,6 @@ void mouse(int button, int state, int x, int y) {
 
 
 void motion(int x, int y) {
-
 	//convert coordinate space
 	y = displayHeight - y;
 
@@ -285,7 +284,6 @@ void motion(int x, int y) {
 	if (mouseDownViewport && mouseDownViewport->getView()) {
 		Viewport *vp = mouseDownViewport;
 		View *v = vp->getView();
-
 
 		if (!(keyModifiers & (SWUT_ACTIVE_CTRL | SWUT_ACTIVE_ALT))) {
 			if (v->getOrtho()) {

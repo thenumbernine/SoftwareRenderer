@@ -177,14 +177,16 @@ void swutMainLoop() {
 				if (swutCallbackMotion) {
 					swutCallbackMotion(event.motion.x, event.motion.y);
 				}
+				//TODO else if no buttons are down ...
+				// swutCallbackPassiveMotion
 
 				break;		
 		
 			case SDL_MOUSEBUTTONUP:
 				if (swutCallbackMouse) {
-					if (event.button.button == 0) swutCallbackMouse(SWUT_LEFT_BUTTON, SWUT_UP, event.button.x, event.button.y);
-					if (event.button.button == 1) swutCallbackMouse(SWUT_RIGHT_BUTTON, SWUT_UP, event.button.x, event.button.y);
-					if (event.button.button == 2) swutCallbackMouse(SWUT_MIDDLE_BUTTON, SWUT_UP, event.button.x, event.button.y);
+					if (event.button.button == SDL_BUTTON_LEFT) swutCallbackMouse(SWUT_LEFT_BUTTON, SWUT_UP, event.button.x, event.button.y);
+					if (event.button.button == SDL_BUTTON_RIGHT) swutCallbackMouse(SWUT_RIGHT_BUTTON, SWUT_UP, event.button.x, event.button.y);
+					if (event.button.button == SDL_BUTTON_MIDDLE) swutCallbackMouse(SWUT_MIDDLE_BUTTON, SWUT_UP, event.button.x, event.button.y);
 				}
 				captureCount--;
 				if (!captureCount) SDL_CaptureMouse(SDL_FALSE);
@@ -194,9 +196,9 @@ void swutMainLoop() {
 				if (!captureCount) SDL_CaptureMouse(SDL_TRUE);
 				captureCount++;
 				if (swutCallbackMouse) {
-					if (event.button.button == 0) swutCallbackMouse(SWUT_LEFT_BUTTON, SWUT_DOWN, event.button.x, event.button.y);
-					if (event.button.button == 1) swutCallbackMouse(SWUT_RIGHT_BUTTON, SWUT_DOWN, event.button.x, event.button.y);
-					if (event.button.button == 2) swutCallbackMouse(SWUT_MIDDLE_BUTTON, SWUT_DOWN, event.button.x, event.button.y);
+					if (event.button.button == SDL_BUTTON_LEFT) swutCallbackMouse(SWUT_LEFT_BUTTON, SWUT_DOWN, event.button.x, event.button.y);
+					if (event.button.button == SDL_BUTTON_RIGHT) swutCallbackMouse(SWUT_RIGHT_BUTTON, SWUT_DOWN, event.button.x, event.button.y);
+					if (event.button.button == SDL_BUTTON_MIDDLE) swutCallbackMouse(SWUT_MIDDLE_BUTTON, SWUT_DOWN, event.button.x, event.button.y);
 				}
 				break;
 			}

@@ -323,38 +323,28 @@ static float swClearDepthValue = 0.f;
 
 void swClear (int bits) {
 
-#if 0
-	const int size = swCurrentBMI.bmiHeader.biWidth * swCurrentBMI.bmiHeader.biHeight * sizeof(long);
+	const int count = swBufferWidth * swBufferHeight;
 
 	if (bits & SW_COLOR_BUFFER_BIT && swBMPBuffer) {
-
-#if 1
 		int write = (unsigned char)(swClearColorValue.z * 255.f) |
 					(unsigned char)(swClearColorValue.y * 255.f) << 8 |
 					(unsigned char)(swClearColorValue.x * 255.f) << 16 |
 					(unsigned char)(swClearColorValue.w * 255.f) << 24;
-		memset(swBMPBuffer, write, size);
-
-#else
-		BitBlt(swHDCBackBuffer, 0, 0, swBufferWidth, swBufferHeight, 0, 0, 0, BLACKNESS);
-
-#endif
-
+		std::fill(swBMPBuffer, swBMPBuffer + count, write);
 	}
 
 	//for some odd reason, these memsets only look at the first 8 bits of the 32-bit fill value passed.  WHY?!?!?!
 
 	if (bits & SW_DEPTH_BUFFER_BIT && swDepthBuffer) {
-		memset(swDepthBuffer, 0 /*0x7f / * *(int *)&swClearDepthValue >> 24*/, size);
+		std::fill(swDepthBuffer, swDepthBuffer + count, swClearDepthValue);
 	}
-#endif
 }
 
-void swClearColor (float r, float g, float b, float a) {
+void swClearColor(float r, float g, float b, float a) {
 	swClearColorValue = vec4f(r,g,b,a);
 }
 
-void swClearDepth (double depth) {
+void swClearDepth(double depth) {
 	swClearDepthValue = 1.f - (float)depth;
 }
 
