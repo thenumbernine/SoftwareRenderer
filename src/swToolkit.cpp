@@ -57,11 +57,11 @@ void swutCreateWindow(const char *title) {
 	int sdlInitError = SDL_Init(SDL_INIT_VIDEO);
 	if (sdlInitError) throw Common::Exception() << "SDL_Init failed with error code " << sdlInitError;
 
-#if 1
+#if 0
 	SDL_CreateWindowAndRenderer(width, height, 0, &window, &renderer);
 	if (!window || !renderer) throw Common::Exception() << "SDL_CreateWindowAndRenderer failed";
 #endif
-#if 0
+#if 1
 	window = SDL_CreateWindow(
 		swutWindowTitle.c_str(),
 		SDL_WINDOWPOS_CENTERED,
@@ -70,6 +70,9 @@ void swutCreateWindow(const char *title) {
 		height, 
 		SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN);
 	if (!window) throw Common::Exception() << "SDL_CreateWindow failed";
+
+	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);
+	if (!renderer) throw Common::Exception() << "SDL_CreateRenderer failed";
 #endif
 
 	framebuffer = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, width, height);
@@ -213,7 +216,7 @@ void swutMainLoop() {
 void swutPostRedisplay() {
 	SDL_UpdateTexture(framebuffer, nullptr, swBMPBuffer, width * sizeof (uint32_t));
 	SDL_RenderClear(renderer);
-	SDL_RenderCopy(renderer, framebuffer, nullptr, nullptr);
+	SDL_RenderCopyEx(renderer, framebuffer, nullptr, nullptr, 0., nullptr, SDL_FLIP_VERTICAL);
 	SDL_RenderPresent(renderer);
 }
 

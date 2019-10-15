@@ -1,10 +1,3 @@
-#include <vector>
-
-#include <iostream>
-#include <stdio.h>
-//#include <direct.h>
-#include <time.h>
-
 #include "Viewport.h"
 #include "Scene.h"
 #include "Main.h"
@@ -12,7 +5,18 @@
 #include "sw.h"
 #include "swToolkit.h"
 
+#include "resource.h"
 #include "Q1ModelScene.h"
+#include "Common/Exception.h"
+
+#include <stdio.h>
+//#include <direct.h>
+#include <time.h>
+
+#include <vector>
+#include <iostream>
+#include <memory>
+#include <map>
 
 #define MULTIVIEW
 
@@ -56,7 +60,7 @@ enum {
 
 static Viewport viewports[VIEWPORT_COUNT];
 static View views[VIEW_COUNT];
-static Q1ModelScene scene;
+static std::shared_ptr<Q1ModelScene> scene;
 
 ////////////////// screen functions -- will make a new class out of these soon
 
@@ -121,7 +125,7 @@ void display() {
 	}
 
 	//perform any once-per-display updates
-	scene.update();
+	scene->update();
 
 #ifdef NEED_UPDATE_TWICE
 	for(;;) {
@@ -142,6 +146,8 @@ void display() {
 		updateTwice = false;
 	}
 #endif
+
+	scene->updateGUI();
 }
 
 static int displayWidth = 1;
@@ -271,6 +277,7 @@ void mouse(int button, int state, int x, int y) {
 
 
 void motion(int x, int y) {
+	
 	//convert coordinate space
 	y = displayHeight - y;
 
@@ -331,8 +338,115 @@ void motion(int x, int y) {
 
 ////////////////// init
 
-void init_scene() {
-	scene.init();
+static std::map<std::string, std::pair<int Q1ModelScene::*, std::map<std::string, int>>> sceneKVs = {
+	{
+		"model", 
+		{
+			&Q1ModelScene::modelMode,
+			{
+				{"shambler", IDC_RADIO_MDL_Q},
+				{"cube", IDC_RADIO_MDL_CUBE},
+				{"cone", IDC_RADIO_MDL_CONE},
+				{"torus", IDC_RADIO_MDL_TORUS},
+				{"sphere", IDC_RADIO_MDL_SPHERE},
+			}
+		}
+	},
+	{
+		"render",
+		{
+			&Q1ModelScene::renderMode,
+			{
+				{"none", IDC_RADIO_REN_NONE},
+				{"linear", IDC_RADIO_REN_LINEAR},
+				{"cylinder", IDC_RADIO_REN_CYL},
+				{"sphere", IDC_RADIO_REN_SPH},
+				{"cel", IDC_RADIO_REN_CEL},
+			}
+		}
+	},
+	{
+		"texture",
+		{
+			&Q1ModelScene::textureMode,
+			{
+				{"default", IDC_RADIO_TEX_DEFAULT},
+				{"checker", IDC_RADIO_TEX_CHECKER},
+				{"contour", IDC_RADIO_TEX_CONTOUR},
+				{"cel", IDC_RADIO_TEX_CEL},
+				{"rgb", IDC_RADIO_TEX_RGB},
+				{"normalize", IDC_RADIO_TEX_NORMALIZE},
+			}
+		}
+	},
+/*	{
+		"border0",
+		{
+			&Q1ModelScene::borderMode[0],
+			{
+				{"repeat", IDC_RADIO_BOR_U_REP},
+				{"clamp", IDC_RADIO_BOR_U_CLMP},
+			},
+		}
+	},
+	{
+		"border1",
+		{
+			&Q1ModelScene::borderMode[1],
+			{
+				{"repeat", IDC_RADIO_BOR_V_REP},
+				{"clamp", IDC_RADIO_BOR_V_CLMP},
+			},
+		}
+	},
+	{
+		"border2",
+		{
+			&Q1ModelScene::borderMode[2],
+			{
+				{"repeat", IDC_RADIO_BOR_W_REP},
+				{"clamp", IDC_RADIO_BOR_W_CLMP},
+			},
+		}
+	},
+*/	{
+		"filter",
+		{
+			&Q1ModelScene::filterMode,
+			{
+				{"nearest", IDC_RADIO_FIL_NEAR},
+				{"linear", IDC_RADIO_FIL_LIN},
+			}
+		}
+	},
+};
+
+void init_scene(const std::vector<std::string>& args) {
+	scene = std::make_shared<Q1ModelScene>();
+
+	int n = (int)args.size();
+	for (int i = 1; i < n; ++i) {
+		const std::string& key = args[i];
+		if (i < n-1) {
+			auto kit = sceneKVs.find(key);
+			if (kit != sceneKVs.end()) {
+				int Q1ModelScene::*vp = kit->second.first;
+				std::map<std::string, int>& m = kit->second.second;
+
+				const std::string& value = args[++i];
+				auto vit = m.find(value);
+				if (vit == m.end()) {
+					std::cerr << "couldn't find value " << value << " for argument " << key << std::endl;
+				} else {
+					(*scene).*vp = vit->second;
+					continue;
+				}
+			}
+		}
+		//} else if (key == "texmat") {
+	
+		throw Common::Exception() << "unknown cmd-line argument " << key;
+	}
 }
 
 void init_gl() {
@@ -345,7 +459,7 @@ void init_gl() {
 
 void init_views() {
 
-	Scene *scene = &::scene;
+	Scene *scene = ::scene.get();
 
 #define _VIEW_INIT_DIST	100
 #define _ORTHO_SIZE		50
@@ -423,10 +537,10 @@ void init_viewports() {
  *  3) generate and color polygons
  *  4) generate & draw contours
  */
-void init() {
+void init(const std::vector<std::string>& args) {
 
 	init_gl();
-	init_scene();
+	init_scene(args);
 	init_views();
 	init_viewports();
 
@@ -440,12 +554,14 @@ void init() {
 
 void shutdown() {
 	std::cout << "shutdown system..." << std::endl;
-	scene.shutdown();
+	scene = nullptr;
 }
 
 ////////////////// main
 
 int main(int argc, char ** argv) {
+	std::vector<std::string> args;
+	std::copy(argv, argv+argc, std::back_inserter<std::vector<std::string>>(args));
 
 	swutInit(0,0);//&argc, argv);
 
@@ -473,7 +589,7 @@ int main(int argc, char ** argv) {
 
 	//update loop
 	try {
-		init();
+		init(args);
 		swutMainLoop();
 	} catch (const std::exception& e) {
 		std::cerr << "failed with exception " << e.what() << std::endl;

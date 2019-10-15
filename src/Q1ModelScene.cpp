@@ -224,19 +224,20 @@ void makeNormalizeVectorCubeMap(int size)
 
 // *************************** END MD2SHADER RIP
 
-void Q1ModelScene::init() {
-
-#if 0	
-	//start controls...
-	controlWnd = CreateDialogParam(
-		GetModuleHandle(NULL),
-		MAKEINTRESOURCE(IDD_DIALOG_OPTIONS),
-		NULL,
-		(DLGPROC)Q1Model_DlgProc,
-		(long)this);
-
-	ShowWindow(controlWnd, SW_SHOW);
-#endif
+Q1ModelScene::Q1ModelScene() :
+	modelMode(IDC_RADIO_MDL_CUBE),
+	renderMode(IDC_RADIO_REN_NONE),
+	textureMode(IDC_RADIO_TEX_NONE),
+	filterMode(IDC_RADIO_FIL_NEAR),
+	
+	rgbTex(),
+	celTex(),
+	contourTex(),
+	checkerTex()
+{
+	borderMode[0] = IDC_RADIO_BOR_U_REP;
+	borderMode[1] = IDC_RADIO_BOR_V_REP;
+	borderMode[2] = IDC_RADIO_BOR_W_REP;
 
 	//rgbTex
 
@@ -329,27 +330,27 @@ void Q1ModelScene::init() {
 
 	//quakeMdl
 
-	quakeMdl = new Q1Model();
+	quakeMdl = std::make_shared<Q1Model>();
 	quakeMdl->LoadFromFile("data/shambler.mdl");
 
 	//cubeMdl
 
-	cubeMdl = new ObjFile();
+	cubeMdl = std::make_shared<ObjFile>();
 	cubeMdl->load("data/cube.obj");
 
 	//coneMdl
 
-	coneMdl = new ObjFile();
+	coneMdl = std::make_shared<ObjFile>();
 	coneMdl->load("data/cone.obj");
 
 	//torusMdl
 
-	torusMdl = new ObjFile();
+	torusMdl = std::make_shared<ObjFile>();
 	torusMdl->load("data/torus.obj");
 
 	//sphereMdl
 
-	sphereMdl = new ObjFile();
+	sphereMdl = std::make_shared<ObjFile>();
 	sphereMdl->load("data/sphere.obj");
 
 //	time = clock();
@@ -361,41 +362,13 @@ void Q1ModelScene::init() {
 //	swEnable(SW_DEPTH_TEST);
 }
 
-void Q1ModelScene::shutdown() {
-
-	if (quakeMdl) delete quakeMdl;
-	if (cubeMdl) delete cubeMdl;
-	if (coneMdl) delete coneMdl;
-	if (torusMdl) delete torusMdl;
-	if (sphereMdl) delete sphereMdl;
+Q1ModelScene::~Q1ModelScene() {
 	if (rgbTex) swDeleteTextures(1, &rgbTex);
 	if (celTex) swDeleteTextures(1, &celTex);
 	if (contourTex) swDeleteTextures(1, &contourTex);
 	if (checkerTex) swDeleteTextures(1, &checkerTex);
-
-	clear();
 }
 
-void Q1ModelScene::clear() {
-
-	quakeMdl = NULL;
-	cubeMdl = NULL;
-	coneMdl = NULL;
-	torusMdl = NULL;
-	sphereMdl = NULL;
-	rgbTex = celTex = contourTex = checkerTex = 0;
-	controlThreadID = 0;
-
-	modelMode = IDC_RADIO_MDL_CUBE;
-	renderMode = IDC_RADIO_REN_NONE;
-	textureMode = IDC_RADIO_TEX_NONE;
-	borderMode[0] = IDC_RADIO_BOR_U_REP;
-	borderMode[1] = IDC_RADIO_BOR_V_REP;
-	borderMode[2] = IDC_RADIO_BOR_W_REP;
-	filterMode = IDC_RADIO_FIL_NEAR;
-
-	texMat = mat44f();	//ident
-}
 
 void Q1ModelScene::update() {
 #if 0	
@@ -680,4 +653,7 @@ void Q1ModelScene::render(const Viewport *viewport, const View *view) {
 
 #endif
 
+}
+
+void Q1ModelScene::updateGUI() {
 }
