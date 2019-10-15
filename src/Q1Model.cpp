@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <assert.h>
 
-//#include "../m_foundation/main.h"
-
 #include <memory.h>
+#include "Common/Exception.h"
+#include "Common/File.h"
 #include "Q1Model.h"
 
 #include "sw.h"
@@ -17,17 +17,18 @@ void Q1Model::Reset() {
 	tri = nullptr;
 	frame = nullptr;
 	num_poses = 0;
+	pose = nullptr;
 	normal = nullptr;
 }
 
 void Q1Model::Unload() {
 	//unalloc
-	if (skin) free(skin);
-	if (vtx) free(vtx);
-	if (tri) free(tri);
-	if (frame) free(frame);
-	if (pose) free(pose);
-	if (normal) free(normal);
+	if (skin) delete[] skin;
+	if (vtx) delete[] vtx;
+	if (tri) delete[] tri;
+	if (frame) delete[] frame;
+	if (pose) delete[] pose;
+	if (normal) delete[] normal;
 
 	//reset
 	Reset();
@@ -126,7 +127,7 @@ static const unsigned char *stretchToPowerOfTwo(unsigned int *width, unsigned in
 	return stretch;
 }
 
-bool Q1Model::LoadFromBuffer(const char *read_buffer) {
+void Q1Model::LoadFromBuffer(const char *read_buffer) {
 
 	int i,j,s;
 
@@ -136,16 +137,12 @@ bool Q1Model::LoadFromBuffer(const char *read_buffer) {
 
 	//validate
 	if (mdl.numskins < 1 || mdl.numskins > MAX_SKINS) {
-		printf("bad skin # on model\n");
-		return false;
+		throw Common::Exception() << "bad skin # on model";
 	}
 
 	//skins
-	skin = (unsigned int *)malloc(sizeof(int) * mdl.numskins * 4);
-	if (!skin) {
-		printf("unable to alloc texture array\n");
-		return false;
-	}
+	//skin = (unsigned int *)malloc(sizeof(int) * mdl.numskins * 4);
+	skin = new unsigned int[mdl.numskins * 4];
 
 	s = mdl.skinwidth * mdl.skinheight;
 	q1_aliasskintype_t *aliasskintype = (q1_aliasskintype_t *)read_buffer;
@@ -171,8 +168,7 @@ bool Q1Model::LoadFromBuffer(const char *read_buffer) {
 			printf(" I FOUND A GROUP SKIN WITHIN THIS MODEL!\n");
 			int group_numskins = *(int *)read_buffer;
 			if (group_numskins < 0 || group_numskins > 4) {
-				printf("found oob group_numskins: %d\n", group_numskins);
-				return false;
+				throw Common::Exception() << "found oob group_numskins: " << group_numskins;
 			}
 			//skip over intervals while we're at it
 			read_buffer += sizeof(int) + sizeof(float) * group_numskins;
@@ -192,20 +188,14 @@ bool Q1Model::LoadFromBuffer(const char *read_buffer) {
 
 	//geometry
 	s = sizeof(q1_stvert_t) * mdl.numverts;
-	vtx = (q1_stvert_t *)malloc(s);
-	if (!vtx) {
-		printf("unable to alloc vertex array\n");
-		return false;
-	}
+	//vtx = (q1_stvert_t *)malloc(s);
+	vtx = new q1_stvert_t[mdl.numverts];
 	memcpy(vtx, read_buffer, s);
 	read_buffer += s;
 
 	s = sizeof(q1_dtriangle_t) * mdl.numtris;
-	tri = (q1_dtriangle_t *)malloc(s);
-	if (!tri) {
-		printf("unable to alloc triangle array\n");
-		return false;
-	}
+	//tri = (q1_dtriangle_t *)malloc(s);
+	tri = new q1_dtriangle_t[mdl.numtris];
 	memcpy(tri, read_buffer, s);
 	read_buffer += s;
 
@@ -213,11 +203,9 @@ bool Q1Model::LoadFromBuffer(const char *read_buffer) {
 		//keep track of where the frame reading starts
 	const char *frame_read_buffer = read_buffer;
 		//alloc the frames
-	frame = (q1_frame_t *)malloc(sizeof(q1_frame_t) * mdl.numframes);
-	if (!frame) {
-		printf("unable to alloc frame array\n");
-		return false;
-	}
+	//frame = (q1_frame_t *)malloc(sizeof(q1_frame_t) * mdl.numframes);
+	frame = new q1_frame_t[mdl.numframes];
+		
 		//read the frames
 	num_poses = 0;
 	for (i = 0; i < mdl.numframes; i++) {
@@ -261,11 +249,9 @@ bool Q1Model::LoadFromBuffer(const char *read_buffer) {
 		//reset read buffer pointer
 	read_buffer = frame_read_buffer;
 		//alloc pose buffer
-	pose = (q1_trivertx_t *)malloc(sizeof(q1_trivertx_t) * mdl.numverts * num_poses);
-	if (!pose) {
-		printf("unable to alloc pose array\n");
-		return false;
-	}
+	//pose = (q1_trivertx_t *)malloc(sizeof(q1_trivertx_t) * mdl.numverts * num_poses);
+	pose = new q1_trivertx_t[mdl.numverts * num_poses];
+		
 		//sift thru the frame data once again
 	int cur_pose = 0;
 	for (i = 0; i < mdl.numframes; i++) {
@@ -300,11 +286,8 @@ bool Q1Model::LoadFromBuffer(const char *read_buffer) {
 	assert(cur_pose == num_poses);
 
 		//alloc normal buffer
-	normal = (vec3f *)malloc(sizeof(vec3f) * mdl.numverts * num_poses);
-	if (!normal) {
-		printf("unable to alloc normal array\n");
-		return false;
-	}
+	//normal = (vec3f *)malloc(sizeof(vec3f) * mdl.numverts * num_poses);
+	normal = new vec3f[mdl.numverts * num_poses];
 
 	for (i = 0; i < num_poses; i++) {
 		q1_trivertx_t *poseverts = &pose[i * mdl.numverts];
@@ -321,8 +304,7 @@ bool Q1Model::LoadFromBuffer(const char *read_buffer) {
 			vec3f vtx[3];
 			for (j = 0; j < 3; j++) {
 				if (tri[t].vertindex[j] < 0 || tri[t].vertindex[j] >= mdl.numverts) {
-					printf("OOB tri vert index\n");
-					return false;
+					throw Common::Exception() << "OOB tri vert index";
 				}
 				int pv = tri[t].vertindex[j];
 				vtx[j].x = (float)poseverts[pv].v[0];
@@ -344,50 +326,12 @@ bool Q1Model::LoadFromBuffer(const char *read_buffer) {
 			posenorms[t] = vecUnit(posenorms[t]);
 		}
 	}
-
-	return true;
 }
 
-bool Q1Model::LoadFromFile(const char *filename) {
-
+void Q1Model::LoadFromFile(const char *filename) {
 	this->Unload();
-
-	//first load the whole file into a binary buffer
-	FILE *file = fopen(filename, "rb");
-	if (!file) return false;
-
-	if (fseek(file, 0, SEEK_END)) {
-		fclose(file);
-		return false;
-	}
-
-	long size = ftell(file);
-
-	if (fseek(file, 0, SEEK_SET)) {
-		fclose(file);
-		return false;
-	}
-
-	char *buffer = (char *)malloc(size);
-	if (!buffer) {
-		fclose(file);
-		return false;
-	}
-
-	if (!fread(buffer, size, 1, file)) {	//read no data
-		free(buffer);
-		fclose(file);
-		return false;
-	}
-
-	fclose(file);
-
-	bool loaded = LoadFromBuffer(buffer);
-
-	//then shutdown the binary buffer
-	free(buffer);
-
-	return loaded;
+	std::string buffer = Common::File::read(filename);
+	LoadFromBuffer(buffer.c_str());
 }
 
 int Q1Model::FindFrameIndex(const char *frame_name) {

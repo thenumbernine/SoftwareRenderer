@@ -9,7 +9,7 @@ class View;
 class Scene {
 public:
 
-	virtual bool init() = 0;
+	virtual void init() = 0;
 	virtual void shutdown() = 0;
 
 	virtual void update() = 0;

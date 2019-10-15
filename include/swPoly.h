@@ -1,5 +1,6 @@
 #pragma once
 
+#include <ostream>
 #include "vec.h"
 
 //#define USE_FRAGMENT_NORMALS
@@ -21,6 +22,15 @@ public:
 #endif
 
 };
+
+inline std::ostream& operator<<(std::ostream& o, const swFragment& f) {
+	return o << "{color=" << f.color << ", texcoord=" << f.texcoord 
+#ifdef USE_FRAGMENT_NORMALS	
+		<< ", normal=" << f.normal 
+#endif		
+		<< "}";
+}
+
 
 /**
  * structure for vertex data
@@ -68,6 +78,10 @@ public:
 	 */
 	void normalizedDeviceToWindow();
 };
+
+inline std::ostream& operator<<(std::ostream& o, const Vertex& v) {
+	return o << "{coord=" << v.coord << ", fr=" << v.fr << "}";
+}
 
 #define SW_VERTEX_STACK_SIZE	32
 

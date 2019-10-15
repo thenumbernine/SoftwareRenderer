@@ -5,6 +5,8 @@
 #include <memory.h>
 #include <time.h>
 
+#include "Common/Exception.h"
+
 #include "ObjFile.h"
 #include "Main.h"
 
@@ -69,15 +71,12 @@ static char *nextSpaceOrEndLine(char *p, char *buffer) {
 	return p;
 }
 
-bool ObjFile::load(const char *filename) {
+void ObjFile::load(const char *filename) {
 	//in case there's already something in this object
 	unload();
 
 	FILE *file = fopen(filename, "r");
-	if (!file) {
-		std::cout << "unable to open the file " << filename << std::endl;
-		return false;
-	}
+	if (!file) throw Common::Exception() << "unable to open the file " << filename;
 
 	//todo - condition test this
 	fseek(file, 0, SEEK_END);
@@ -85,10 +84,6 @@ bool ObjFile::load(const char *filename) {
 	fseek(file, 0, SEEK_SET);
 
 	char *buffer = new char[size+1];
-	if (!buffer) { 
-		fclose(file);
-		return false;
-	}
 
 	size = (int)fread(buffer, 1, size, file);
 	fclose(file);
@@ -236,9 +231,7 @@ bool ObjFile::load(const char *filename) {
 			triIndex_t *t = &tri[i].p[j];
 			
 			if (t->v < 0 || t->v >= (int)vertex.size()) {
-				std::cout << "found an out of bounds vertex at tri " << i << " point " << j << " with index " << t->v << ", max " << vertex.size() << std::endl;;
-				unload();
-				return false;
+				throw Common::Exception() << "found an out of bounds vertex at tri " << i << " point " << j << " with index " << t->v << ", max " << vertex.size();
 			}
 
 //			if (flags & bitflag(OBJFILE_FLAG_USE_TEXCOORDS)) {
@@ -390,8 +383,6 @@ bool ObjFile::load(const char *filename) {
 //	printf("loaded model %s\n", filename);
 
 	strncpy(title, filename, sizeof(title));
-
-	return true;
 }
 
 
@@ -402,7 +393,6 @@ void ObjFile::render() const {
 			swTexCoord2f(VEC2ELEM(texCoord[tri[i].p[j].t]));
 			swNormal3f(VEC3ELEM(normal[tri[i].p[j].n]));
 			swVertex3f(VEC3ELEM(vertex[tri[i].p[j].v]));
-
 		}
 		swEnd();
 	}

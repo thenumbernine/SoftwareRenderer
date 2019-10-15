@@ -85,8 +85,8 @@ private:
 	void Reset();
 public:
 	void Unload();
-	bool LoadFromBuffer(const char *read_buffer);
-	bool LoadFromFile(const char *filename);
+	void LoadFromBuffer(const char *read_buffer);
+	void LoadFromFile(const char *filename);
 
 	int FindFrameIndex(const char *frame_name);
 	int GetSkin(int index);

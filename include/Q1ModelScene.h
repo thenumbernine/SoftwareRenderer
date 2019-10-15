@@ -9,7 +9,7 @@
 
 class Q1ModelScene : public Scene {
 public:
-	virtual bool init();
+	virtual void init();
 	virtual void shutdown();
 	virtual void update();
 

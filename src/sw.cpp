@@ -54,14 +54,13 @@ void swImageSetSize ( swImage *I, int w, int h ) {
 	}
 }
 
-FILE* swImageWritePPM ( swImage *I, char *filename ) {
+FILE* swImageWritePPM(swImage *I, char *filename) {
 
-	int row, col;
 	int r, g, b;
 	Byte br, bg, bb;
 
 	FILE *fp = fopen( filename, "w" );
-	if ( ! fp ) return fp;
+	if (!fp) return fp;
 
 	// output header
 	fprintf( fp, "P6\n" );
@@ -69,40 +68,29 @@ FILE* swImageWritePPM ( swImage *I, char *filename ) {
 	fprintf( fp, "%d\n", 255 );
 
 	// write image values (only handles 8 bits)
-	for ( row = 0; row < I->h; row++ )
-		for ( col = 0; col < I->w; col++ ) {
-			swImageReadPixel( I, col, I->h - row - 1, &r, &g, &b );
+	for (int row = 0; row < I->h; row++) {
+		for (int col = 0; col < I->w; col++) {
+			swImageReadPixel(I, col, I->h - row - 1, &r, &g, &b);
 			
-		 r=r;
-		 g=g;
-		 b=b;
+			r=r;
+			g=g;
+			b=b;
 
-		 br = (Byte) r;
-		 bg = (Byte) g;
-		 bb = (Byte) b;
+			br = (Byte) r;
+			bg = (Byte) g;
+			bb = (Byte) b;
 			
-		 if ( fwrite( &br, sizeof( Byte ), 1, fp ) != sizeof( Byte ) )
-				return (FILE*) NULL;
-			if ( fwrite( &bg, sizeof( Byte ), 1, fp ) != sizeof( Byte ) )
-				return (FILE*) NULL;
-			if ( fwrite( &bb, sizeof( Byte ), 1, fp ) != sizeof( Byte ) )
-				return (FILE*) NULL;
-
-		
-			//if ( fwrite( &br, sizeof( int ), 1, fp ) != sizeof( Byte ) )
-			  // return (FILE*) NULL;
-			//if ( fwrite( &bg, sizeof( Byte ), 1, fp ) != sizeof( Byte ) )
-			  // return (FILE*) NULL;
-			//if ( fwrite( &bb, sizeof( Byte ), 1, fp ) != sizeof( Byte ) )
-			  // return (FILE*) NULL;
-		//fprintf(fp, "%d %d %d %d", r, g, b,0);
+			if (fwrite(&br, sizeof(Byte), 1, fp) != sizeof(Byte)) return nullptr;
+			if (fwrite(&bg, sizeof(Byte), 1, fp) != sizeof(Byte)) return nullptr;
+			if (fwrite(&bb, sizeof(Byte), 1, fp) != sizeof(Byte)) return nullptr;
 		}
+	}
 
-	fclose( fp );
+	fclose(fp);
 	return fp;
 }
 
-void swImageReadPixel ( swImage *I, int w, int h, int *r, int *g, int *b ) {
+void swImageReadPixel( swImage *I, int w, int h, int *r, int *g, int *b ) {
 	long index = swArray3DTo1D( SW_RED, w, I->w, h, I->h );
 	*r = I->values[ index ];
 
@@ -127,12 +115,15 @@ void swImageWritePixel ( swImage *I, int w, int h, int r, int g, int b ) {
 }
 
 static int /* SWWriteMode */ SWCurrentMode;
-swImage SWCurrentImage;
+//swImage SWCurrentImage;
 
-long *swBMPBuffer = NULL;
-//BITMAPINFO swCurrentBMI;
+uint32_t* swBMPBuffer = nullptr;
+float *swDepthBuffer = nullptr;
 
-float *swDepthBuffer = NULL;
+int swBufferWidth = 1;
+int swBufferHeight = 1;
+
+#if 0
 
 void swResizeDepthBuffer(int w, int h) {
 	if (swDepthBuffer) delete[] swDepthBuffer;
@@ -152,8 +143,8 @@ void swBeginGraphics ( int w, int h ) {
 	SWCurrentMode = SW_OVERWRITE;
 
 	// build a frame buffer for reading and writing
-	swImageInit( &SWCurrentImage );
-	swImageSetSize( &SWCurrentImage, w, h );
+	//swImageInit( &SWCurrentImage );
+	//swImageSetSize( &SWCurrentImage, w, h );
 
 	swClearColor( 0, 0, 0, 0);
 	swClear(SW_COLOR_BUFFER_BIT);
@@ -178,13 +169,10 @@ void swEndGraphics ( )
 	swImageDestroy( &SWCurrentImage );
 }
 
-#if 0
 static HBITMAP swHBitmap = NULL;
 static HBITMAP swHOldBitmap = NULL;
 static HWND swHWnd = NULL;
 static HDC swHDCBackBuffer = NULL;		//our window's device context
-static int swWindowWidth = 1;
-static int swWindowHeight = 1;
 
 static void swWindow_createHBitmap(HDC hdc, int w, int h) {
 
@@ -215,11 +203,11 @@ void swWindow_Init(HWND hWnd) {
 	//use this method if our window is already created
 	RECT rect;
 	GetClientRect(swHWnd, &rect);
-	swWindowWidth = rect.right;
-	swWindowHeight = rect.bottom;
+	swBufferWidth = rect.right;
+	swBufferHeight = rect.bottom;
 
-	if (swWindowWidth < 1) swWindowWidth = 1;
-	if (swWindowHeight < 1) swWindowHeight = 1;
+	if (swBufferWidth < 1) swBufferWidth = 1;
+	if (swBufferHeight < 1) swBufferHeight = 1;
 
 //get the device context for the window
 	HDC hdc = GetDC(swHWnd);
@@ -231,7 +219,7 @@ void swWindow_Init(HWND hWnd) {
 	swHDCBackBuffer = CreateCompatibleDC(hdc);
 
 	//create our dc's bitmap
-	swWindow_createHBitmap(hdc, swWindowWidth, swWindowHeight);
+	swWindow_createHBitmap(hdc, swBufferWidth, swBufferHeight);
 
 	//backup the new dc's old bitmap
 	swHOldBitmap = (HBITMAP)SelectObject(swHDCBackBuffer, swHBitmap);
@@ -242,7 +230,7 @@ void swWindow_Init(HWND hWnd) {
 	//and now for something completely different:
 	//our sw graphics code:
 	swImageInit( &SWCurrentImage );
-	swImageSetSize( &SWCurrentImage, swWindowWidth, swWindowHeight );
+	swImageSetSize( &SWCurrentImage, swBufferWidth, swBufferHeight );
 }
 #endif
 
@@ -254,7 +242,7 @@ void swWindow_Paint() {
 
 	BeginPaint(swHWnd, &swWindowPaintStruct);
 
-	BitBlt(swWindowPaintStruct.hdc, 0, 0, swWindowWidth, swWindowHeight,
+	BitBlt(swWindowPaintStruct.hdc, 0, 0, swBufferWidth, swBufferHeight,
 		swHDCBackBuffer, 0, 0, SRCCOPY);
 
 	EndPaint(swHWnd, &swWindowPaintStruct);
@@ -262,15 +250,23 @@ void swWindow_Paint() {
 }
 
 void swWindow_Resize(int w, int h) {
+	delete[] swBMPBuffer;
+	delete[] swDepthBuffer;
+	
+	swBufferWidth = w;
+	swBufferHeight = h;
+	
+	swBMPBuffer = new uint32_t[w * h];
+	swDepthBuffer = new float[w * h];
 #if 0	
 	assert(swHWnd);
 
 	//get our sizes
-	swWindowWidth = w;
-	swWindowHeight = h;
+	swBufferWidth = w;
+	swBufferHeight = h;
 
-	if (swWindowWidth < 1) swWindowWidth = 1;
-	if (swWindowHeight < 1) swWindowHeight = 1;
+	if (swBufferWidth < 1) swBufferWidth = 1;
+	if (swBufferHeight < 1) swBufferHeight = 1;
 
 	//restore the old bitmap
 	SelectObject(swHDCBackBuffer, swHOldBitmap);
@@ -287,7 +283,7 @@ void swWindow_Resize(int w, int h) {
 	HDC hdc = GetDC(swHWnd);
 
 	//make a new bitmap
-	swWindow_createHBitmap(hdc, swWindowWidth, swWindowHeight);
+	swWindow_createHBitmap(hdc, swBufferWidth, swBufferHeight);
 
 	//let go of the window dc
 	ReleaseDC(swHWnd, hdc);
@@ -297,7 +293,7 @@ void swWindow_Resize(int w, int h) {
 
 	//and now for something completely different:
 	//our sw graphics code:
-	swImageSetSize( &SWCurrentImage, swWindowWidth, swWindowHeight );
+	swImageSetSize( &SWCurrentImage, swBufferWidth, swBufferHeight );
 #endif
 }
 
@@ -340,7 +336,7 @@ void swClear (int bits) {
 		memset(swBMPBuffer, write, size);
 
 #else
-		BitBlt(swHDCBackBuffer, 0, 0, swWindowWidth, swWindowHeight, 0, 0, 0, BLACKNESS);
+		BitBlt(swHDCBackBuffer, 0, 0, swBufferWidth, swBufferHeight, 0, 0, 0, BLACKNESS);
 
 #endif
 

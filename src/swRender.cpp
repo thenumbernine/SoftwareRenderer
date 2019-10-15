@@ -58,6 +58,8 @@ static inline void drawPolygons_buildEdgeTable(
 	ymin = 0x7FFFFFFF;	//initially as large as possible, so the next comparison will size it down
 	ymax = -0x7FFFFFFF;	//as small as possible
 
+//std::cout << "swVertexStackSize = " << swVertexStackSize << std::endl;
+
 	//fill the edge table, ymin-sorted *HERE*
 	for (int i = 0; i < swVertexStackSize; i++) {
 		int ii = (i + 1) % swVertexStackSize;
@@ -75,9 +77,13 @@ static inline void drawPolygons_buildEdgeTable(
 		Vertex *vtxMin = &(swVertexStack[min]);
 		Vertex *vtxMax = &(swVertexStack[max]);
 
+//std::cout << "vtx min = " << *vtxMin << ", max = " << *vtxMax << std::endl;
+
 //		//store the minimum y value:
 		int edge_ymin = (int)vtxMin->coord.y;
 		int edge_ymax = (int)vtxMax->coord.y;
+
+//std::cout << "edge ymin = " << edge_ymin << ", ymax = " << edge_ymax << std::endl;
 
 		//if the horizontal line we're targetting is below the lowest screen bar then forget it
 		if (edge_ymin >= edgeTableSize) continue;
@@ -380,10 +386,10 @@ void swDrawPolygons() {
 	int useDepthTest = swDepthBuffer && getSWStateBit(SW_BIT_DEPTH_TEST);
 	int useBlend = getSWStateBit(SW_BIT_BLEND);
 
-	if (edgeTableSize != SWCurrentImage.h) {
-		edgeTableSize = SWCurrentImage.h;
+	if (edgeTableSize != swBufferHeight) {
+		edgeTableSize = swBufferHeight;
 		if (edgeTable) delete[] edgeTable;
-		edgeTable = (edgeTableSize > 0) ? new edge_t *[edgeTableSize] : NULL;
+		edgeTable = (edgeTableSize > 0) ? new edge_t*[edgeTableSize] : NULL;
 		if (edgeTable) {
 			memset(edgeTable, 0, sizeof(edge_t *) * edgeTableSize);
 		}
@@ -436,8 +442,8 @@ void swDrawPolygons() {
 	drawPolygons_buildEdgeTable(ymin, ymax);
 
 	int y = ymin;
-	int rowIndex = y * SWCurrentImage.w;
-	long *rowBuffer = swBMPBuffer + rowIndex;
+	int rowIndex = y * swBufferWidth;
+	uint32_t *rowBuffer = swBMPBuffer + rowIndex;
 	float *rowDepthBuffer = swDepthBuffer + rowIndex;
 
 	//init the active edge table
@@ -447,7 +453,7 @@ void swDrawPolygons() {
 	if (ymax >= edgeTableSize) {
 		ymax = edgeTableSize - 1;
 	}
-
+//std::cout << "y = " << y << ", ymax = " << ymax << std::endl;
 	while (y <= ymax) {
 
 		drawPolygon_updateEdgeTable(y);
@@ -493,7 +499,7 @@ void swDrawPolygons() {
 					x = 0;
 				}
 
-				long *colBuffer = rowBuffer + x;
+				uint32_t *colBuffer = rowBuffer + x;
 				float *colDepthBuffer = rowDepthBuffer + x;
 
 				float one_over_dx = 1.f / (float)(eb->x - ea->x);
@@ -537,7 +543,7 @@ void swDrawPolygons() {
 				while (eb) {
 
 					//test right hand side of the screen scanline
-					if (x >= SWCurrentImage.w) break;
+					if (x >= swBufferWidth) break;
 
 					if (x >= (int)eb->x) {
 						ea = ea->next;
@@ -567,7 +573,7 @@ void swDrawPolygons() {
 						continue;	//reloop & recalc
 					}
 
-					assert(x >= 0 && x < SWCurrentImage.w);
+					assert(x >= 0 && x < swBufferWidth);
 					{
 
 						//if the current depth is greater than written depth
@@ -634,8 +640,8 @@ void swDrawPolygons() {
 		//increment scanline #
 		y++;
 
-		rowBuffer += SWCurrentImage.w;
-		rowDepthBuffer += SWCurrentImage.w;
+		rowBuffer += swBufferWidth;
+		rowDepthBuffer += swBufferWidth;
 
 //		//update 'x's for each edge
 		for (edge_t *e = aetFirst; e; e = e->next) {
@@ -756,11 +762,11 @@ void swDrawLine(Vertex v0, Vertex v1) {
 
 		int ix = (int)v.x;
 		int iy = (int)v.y;
-		if (ix >= 0 && ix < SWCurrentImage.w &&
-			iy >= 0 && iy < SWCurrentImage.h)
+		if (ix >= 0 && ix < swBufferWidth &&
+			iy >= 0 && iy < swBufferHeight)
 		{
-			int index = ix + iy * SWCurrentImage.w;
-			long *colBMPBuffer = swBMPBuffer + index;
+			int index = ix + iy * swBufferWidth;
+			uint32_t *colBMPBuffer = swBMPBuffer + index;
 
 			float *colDepthBuffer = swDepthBuffer + index;
 

@@ -4,6 +4,7 @@
 #include "Q1ModelScene.h"
 #include "Texture.h"
 #include "resource.h"
+#include "Common/Exception.h"
 
 #include <stdlib.h>
 
@@ -190,17 +191,13 @@ static void getCubeVector(int i, int cubesize, int x, int y, float *v) {
  * form a normalized vector matching the per-pixel vector used to
  * access the cube map.
  */
-bool makeNormalizeVectorCubeMap(int size)
+void makeNormalizeVectorCubeMap(int size)
 {
 	float v[3];
 	int i, x, y;
 	unsigned char *pixels;
 
 	pixels = new unsigned char[size*size*3];
-	if (pixels == NULL) {
-		printf("normalmap couldnt be allocated\n");
-		return false;
-	}
 
 	for (i = 0; i < 6; i++) {
 	for (y = 0; y < size; y++) {
@@ -223,13 +220,11 @@ bool makeNormalizeVectorCubeMap(int size)
 	swTexParameteri(SW_TEXTURE_CUBE_MAP, SW_TEXTURE_MIN_FILTER, SW_LINEAR);
 
 	delete[] pixels;
-
-	return true;
 }
 
 // *************************** END MD2SHADER RIP
 
-bool Q1ModelScene::init() {
+void Q1ModelScene::init() {
 
 #if 0	
 	//start controls...
@@ -329,70 +324,33 @@ bool Q1ModelScene::init() {
     swGenTextures(1, &normalizeCubeMapTex);
 	swEnable(SW_TEXTURE_CUBE_MAP);
     swBindTexture(SW_TEXTURE_CUBE_MAP, normalizeCubeMapTex);
-    if (!makeNormalizeVectorCubeMap(32)) return false;
+    makeNormalizeVectorCubeMap(32);
 	swDisable(SW_TEXTURE_CUBE_MAP);
 
 	//quakeMdl
 
 	quakeMdl = new Q1Model();
-	if (quakeMdl && !quakeMdl->LoadFromFile("data/shambler.mdl")) {
-		delete quakeMdl;
-		quakeMdl = NULL;
-	}
-	if (!quakeMdl) {
-		printf("couldnt create the quake model\n");
-		return false;
-	}
+	quakeMdl->LoadFromFile("data/shambler.mdl");
 
 	//cubeMdl
 
 	cubeMdl = new ObjFile();
-	if (cubeMdl && !cubeMdl->load("data/cube.obj")) {
-		delete cubeMdl;
-		cubeMdl = NULL;
-	}
-	if (!cubeMdl) {
-		printf("couldnt create the cubeMdl model\n");
-		return false;
-	}
+	cubeMdl->load("data/cube.obj");
 
 	//coneMdl
 
 	coneMdl = new ObjFile();
-	if (coneMdl && !coneMdl->load("data/cone.obj")) {
-		delete coneMdl;
-		coneMdl = NULL;
-	}
-	if (!coneMdl) {
-		printf("couldnt create the coneMdl model\n");
-		return false;
-	}
+	coneMdl->load("data/cone.obj");
 
 	//torusMdl
 
 	torusMdl = new ObjFile();
-	if (torusMdl && !torusMdl->load("data/torus.obj")) {
-		delete torusMdl;
-		torusMdl = NULL;
-	}
-	if (!torusMdl) {
-		printf("couldnt create the torusMdl model\n");
-		return false;
-	}
+	torusMdl->load("data/torus.obj");
 
 	//sphereMdl
 
 	sphereMdl = new ObjFile();
-	if (sphereMdl && !sphereMdl->load("data/sphere.obj")) {
-		delete sphereMdl;
-		sphereMdl = NULL;
-	}
-	if (!sphereMdl) {
-		printf("couldnt create the sphereMdl model\n");
-		return false;
-	}
-
-	return true;
+	sphereMdl->load("data/sphere.obj");
 
 //	time = clock();
 //	frames = 0;

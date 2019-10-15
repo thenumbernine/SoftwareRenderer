@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <iostream>
 
 #include "sw.h"
 #include "swMain.h"
@@ -144,8 +145,11 @@ void swVertex4f(float x, float y, float z, float w) {
 
 //coordinate
 	vec4f curCoord(x,y,z,w);
+//std::cout << "world " << curCoord << std::endl;	
 	vec4f mdlvCoord = mdlvMat * curCoord;
+//std::cout << "modelview " << mdlvCoord << std::endl;	
 	vec4f projCoord = projMat * mdlvCoord;
+//std::cout << "projected " << projCoord << std::endl;	
 
 //color
 	//just grab the color.  no color matrices. yet.
@@ -252,6 +256,7 @@ void swVertex4f(float x, float y, float z, float w) {
 		, normalFixed
 #endif
 		);
+//std::cout << "vertex " << vertex << std::endl;	
 
 	//clip to normalized device
 	vertex.clipToNormalizedDevice();
@@ -259,6 +264,9 @@ void swVertex4f(float x, float y, float z, float w) {
 	//push it onto the vertex stack
 	assert(swVertexStackSize < (int)numberof(swVertexStack));
 	swVertexStack[swVertexStackSize] = vertex;
+	
+//std::cout << "adding " << swVertexStack[swVertexStackSize] << std::endl;
+	
 	swVertexStackSize++;
 }
 

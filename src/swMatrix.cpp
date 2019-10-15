@@ -1,6 +1,6 @@
 #include "sw.h"
 #include "swMatrix.h"
-
+#include <iostream>
 #include <assert.h>
 
 //this is me working out the header abstraction level
@@ -301,19 +301,20 @@ void swOrtho(float l, float r, float b, float t, float n, float f) {
 	float dx = r - l;
 	float dy = t - b;
 
-	postMult(
-		mat44f(
 #if 0	//gl specs:
+	mat44f ortho = mat44f(
 			2.f/dx,		0,			0,			0,
 			0,			2.f/dy,		0,			0,
 			0,			0,			-2.f/dz,	0,
-			(-r-l)/dx,	(-t-b)/dy,	(-f-n)/dz,	1.f));
+			(-r-l)/dx,	(-t-b)/dy,	(-f-n)/dz,	1.f);
 #else	//the math:
+	mat44f ortho = mat44f(
 			2.f/dx,		0,			0,			0,
 			0,			2.f/dy,		0,			0,
 			0,			0,			2.f/dz,		0,
-			(-r-l)/dx,	(-t-b)/dy,	(-f-n)/dz,	1.f));
+			(-r-l)/dx,	(-t-b)/dy,	(-f-n)/dz,	1.f);
 #endif
+	postMult(ortho);
 }
 
 /**
@@ -332,14 +333,16 @@ void swFrustum(float l, float r, float b, float t, float n, float f) {
 	float dy = t - b;
 	float dz = f - n;
 
+#if 0	//gl specs:
 	postMult(
 		mat44f(
-#if 0	//gl specs:
 			2.f*n/dx,	0,			0,			0,
 			0,			2.f*n/dy,	0,			0,
 			(r+l)/dx,	(t+b)/dy,	(-f-n)/dz,	-1,
 			0,			0,			-2.f*f*n/dz,0));
 #else	//the math:
+	postMult(
+		mat44f(
 			-2.f*n/dx,	0,			0,			0,
 			0,			-2.f*n/dy,	0,			0,
 			(r+l)/dx,	(t+b)/dy,	(-f-n)/dz,	-1,

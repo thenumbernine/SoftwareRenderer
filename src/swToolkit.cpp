@@ -19,7 +19,6 @@ static std::string swutWindowTitle;
 static SDL_Window* window = nullptr;
 static SDL_Renderer* renderer = nullptr;
 static SDL_Texture* framebuffer = nullptr;
-static uint32_t* pixels = nullptr;
 
 //bitflags of SWUT_ACTIVE_SHIFT, SWUT_ACTIVE_CTRL, SWUT_ACTIVE_ALT
 static int swutModifiers = 0;
@@ -36,9 +35,9 @@ void swutInit(int *argc, char **argv) {}	//not implemented yet
 
 void swutInitDisplayMode(int flags) {}		//not implemented yet
 
-void swutInitWindowSize(int width, int height) {
-	width = width;
-	height = height;
+void swutInitWindowSize(int width_, int height_) {
+	width = width_;
+	height = height_;
 }
 
 void swutInitWindowPosition(int x, int y) {
@@ -53,13 +52,15 @@ void swutMouseFunc(void (*mouse)(int button, int state, int x, int y)) { swutCal
 void swutMotionFunc(void (*motion)(int x, int y)) { swutCallbackMotion = motion; }
 void swutPassiveMotionFunc(void (*passiveMotion)(int x, int y)) { swutCallbackPassiveMotion = passiveMotion; }
 
-void swutCreateWindow(const char *name) {
+void swutCreateWindow(const char *title) {
 
 	int sdlInitError = SDL_Init(SDL_INIT_VIDEO);
 	if (sdlInitError) throw Common::Exception() << "SDL_Init failed with error code " << sdlInitError;
 
+#if 1
 	SDL_CreateWindowAndRenderer(width, height, 0, &window, &renderer);
 	if (!window || !renderer) throw Common::Exception() << "SDL_CreateWindowAndRenderer failed";
+#endif
 #if 0
 	window = SDL_CreateWindow(
 		swutWindowTitle.c_str(),
@@ -69,20 +70,23 @@ void swutCreateWindow(const char *name) {
 		height, 
 		SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN);
 	if (!window) throw Common::Exception() << "SDL_CreateWindow failed";
-#endif	
+#endif
 
-	std::cout << "creating window of size " << width << ", " << height << std::endl;
-//	framebuffer = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, width, height);
+	framebuffer = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, width, height);
 
-	pixels = new uint32_t[width * height];
+	swWindow_Resize(width, height);
 
+#if 1
 	int i = 0;
-	for (int y = 0; y < width; ++y) {
-		for (int x = 0; x < height; ++x) {
-			pixels[i++] = rand();
+	for (int y = 0; y < swBufferWidth; ++y) {
+		for (int x = 0; x < swBufferHeight; ++x) {
+			swBMPBuffer[i++] = rand();
 		}
 	}
-//	swutPostRedisplay();
+#endif
+
+	swutPostRedisplay();
+	swutSetWindowTitle(title);
 }
 
 void swutDestroyWindow() {
@@ -91,9 +95,7 @@ void swutDestroyWindow() {
 		window = nullptr;
 	}
 	
-	delete[] pixels;
-	pixels = nullptr;
-	
+	swWindow_Destroy();	
 	SDL_Quit();
 }
 
@@ -114,7 +116,6 @@ void swutMainLoop() {
 		SDL_SetWindowSize(window, width, height);
 		swutCallbackReshape(width, height);
 	}
-	
 	if (swutCallbackDisplay) {
 		swutCallbackDisplay();
 	}
@@ -129,15 +130,14 @@ void swutMainLoop() {
 			case SDL_WINDOWEVENT:
 				switch (event.window.event) {
 				case SDL_WINDOWEVENT_RESIZED:
-
-					delete[] pixels;
-					SDL_DestroyTexture(framebuffer);
-					
+//std::cout << "SDL_WINDOWEVENT_RESIZED" << std::endl;
 					width = event.window.data1;
 					height = event.window.data2;
-					
+
+					SDL_DestroyTexture(framebuffer);
 					framebuffer = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, width, height);
-					pixels = new uint32_t[width * height];
+					
+					swWindow_Resize(width, height);
 					
 					swutCallbackReshape(width, height);
 					//fallthrough to display...
@@ -209,13 +209,10 @@ void swutMainLoop() {
 }
 
 void swutPostRedisplay() {
-/*	
-	SDL_UpdateTexture(framebuffer , NULL, pixels, width * sizeof (uint32_t));
+	SDL_UpdateTexture(framebuffer, nullptr, swBMPBuffer, width * sizeof (uint32_t));
 	SDL_RenderClear(renderer);
-	SDL_RenderCopy(renderer, framebuffer , NULL, NULL);
+	SDL_RenderCopy(renderer, framebuffer, nullptr, nullptr);
 	SDL_RenderPresent(renderer);
-*/
-	SDL_UpdateWindowSurface(window);
 }
 
 int swutGetModifiers() {

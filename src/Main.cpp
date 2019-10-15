@@ -148,6 +148,8 @@ static int displayWidth = 1;
 static int displayHeight = 1;
 
 void resize(int w, int h) {
+//std::cout << "resize " << w << ", " << h << std::endl;
+//exit(0);
 	displayWidth = w;
 	displayHeight = h;
 	int hw = w >> 1;
@@ -331,27 +333,19 @@ void motion(int x, int y) {
 
 ////////////////// init
 
-bool init_scene() {
-
-	if (!scene.init()) {
-		printf("failed to init object scene!\n");
-		return false;
-	}
-
-	return true;
+void init_scene() {
+	scene.init();
 }
 
-bool init_gl() {
+void init_gl() {
 
 	swClearColor(0,0,0,0);
 
 	//enable depth testing by default
 	swEnable(SW_DEPTH_TEST);
-
-	return true;
 }
 
-bool init_views() {
+void init_views() {
 
 	Scene *scene = &::scene;
 
@@ -406,12 +400,10 @@ bool init_views() {
 //		vec4f(-0.461630f, 0.474959f, -0.405921f, -0.629714f));
 		vec3f(-_VIEW_INIT_DIST,0,0),
 		quat4fIdentity);
-
-	return true;
 }
 
-//only call this after init_views() and init_scene() have been called
-bool init_viewports() {
+//only call this after init_views() and scene.init() have been called
+void init_viewports() {
 	//set all and add non-full to activeViewport
 	screen_restoreViewports();
 
@@ -424,8 +416,6 @@ bool init_viewports() {
 #else
 	viewports[VIEWPORT_FULL].setView(&views[VIEW_3D]);
 #endif
-
-	return true;
 }
 
 /**
@@ -435,25 +425,23 @@ bool init_viewports() {
  *  3) generate and color polygons
  *  4) generate & draw contours
  */
-bool init() {
+void init() {
 
-	if (!init_gl()) return false;
-	if (!init_scene()) return false;
-	if (!init_views()) return false;
-	if (!init_viewports()) return false;
+	init_gl();
+	init_scene();
+	init_views();
+	init_viewports();
 
-	printf("\n");
-	printf("instructions:\n");
-	printf("left click to pan\n");
-	printf("ctrl + left click to rotate\n");
-
-	return true;
+	std::cout << std::endl;
+	std::cout << "instructions:" << std::endl;
+	std::cout << "left click to pan" << std::endl;
+	std::cout << "ctrl + left click to rotate" << std::endl;
 }
 
 ////////////////// shutdown
 
 void shutdown() {
-	printf("shutdown system...\n");
+	std::cout << "shutdown system..." << std::endl;
 	scene.shutdown();
 }
 
@@ -486,10 +474,11 @@ int main(int argc, char ** argv) {
 //	glutKeyboardFunc(keyboard);
 
 	//update loop
-	if (!init()) {
-		printf("init() failed\n");
-	} else {
+	try {
+		init();
 		swutMainLoop();
+	} catch (const std::exception& e) {
+		std::cerr << "failed with exception " << e.what() << std::endl;
 	}
 
 	shutdown();

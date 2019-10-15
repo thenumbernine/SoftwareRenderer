@@ -14,10 +14,3 @@
 #define endof(x)	((x) + numberof((x)))
 
 #define bitflag(x)	((1<<(x)))
-
-/**
- * returns the max of the two values
- */
-#ifndef max
-#define max(x,y)	(((x)>(y)?(x):(y)))
-#endif

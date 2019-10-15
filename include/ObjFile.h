@@ -125,7 +125,7 @@ public:
 	/**
 	 * Loads the ObjFile object from a file
 	 */
-	bool load(const char *filename);
+	void load(const char *filename);
 
 	/**
 	 * Render an object using normals

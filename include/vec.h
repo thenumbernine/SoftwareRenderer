@@ -1,6 +1,7 @@
 #pragma once
 
 #include <math.h>
+#include <ostream>
 
 //vector math
 
@@ -104,6 +105,9 @@ inline bool operator<(const vec2f &a, const vec2f &b) {
 	return a.x < b.x;
 }
 
+inline std::ostream& operator<<(std::ostream& o, const vec2f& v) {
+	return o << "{" << v.x << ", " << v.y << "}";
+}
 
 //// 3D vectors
 
@@ -205,6 +209,10 @@ inline vec3f operator*(const vec3f &a, const vec3f &b) {
 		a.y * b.z - a.z * b.y,
 		a.z * b.x - a.x * b.z,
 		a.x * b.y - a.y * b.x);
+}
+
+inline std::ostream& operator<<(std::ostream& o, const vec3f& v) {
+	return o << "{" << v.x << ", " << v.y << ", " << v.z << "}";
 }
 
 //magnitude
@@ -355,6 +363,10 @@ inline vec3fixed fixedMul(vec3fixed a, fixed_t b) {
 		fixedMul(a.x, b),
 		fixedMul(a.y, b),
 		fixedMul(a.z, b));
+}
+
+inline std::ostream& operator<<(std::ostream& o, const vec3fixed& v) {
+	return o << "{" << v.x << ", " << v.y << ", " << v.z << "}";
 }
 
 
@@ -608,6 +620,10 @@ inline vec3f quatZAxis(const vec4f &q) {
 		1.f - 2.f * (q.x * q.x + q.y * q.y));
 }
 
+inline std::ostream& operator<<(std::ostream& o, const vec4f& v) {
+	return o << "{" << v.x << ", " << v.y << ", " << v.z << ", " << v.w << "}";
+}
+
 //// 4x4 matrices
 
 /**
@@ -746,6 +762,15 @@ inline bool operator==(const mat44f &a, const mat44f &b) {
 //making MSVC5 able to use this with mat44f
 inline bool operator<(const mat44f &a, const mat44f &b) {
 	return a.x.x < b.x.x;
+}
+
+inline std::ostream& operator<<(std::ostream& o, const mat44f& m) {
+	return o
+		<< "{" << m.x
+		<< ", " << m.y
+		<< ", " << m.z
+		<< ", " << m.w
+		<< "}";
 }
 
 //// orthonormal basis w/translation
