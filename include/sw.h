@@ -2,37 +2,15 @@
 
 #include <stdio.h>
 
-//#ifdef __cplusplus
-//extern "C" {
-//#endif
-
-typedef struct {
-   int w, h;
-   int *values;
-} swImage;
-
-void swImageInit ( swImage *I );
-void swImageDestroy ( swImage *I );
-
-void swImageGetSize ( swImage *I, int *w, int *h );
-void swImageSetSize ( swImage *I, int w, int h );
-
-FILE* swImageWritePPM ( swImage *I, char *filename );
-
-void swImageWritePixel ( swImage *I, int w, int h, int r, int g, int b );
-void swImageReadPixel ( swImage *I, int w, int h, int *r, int *g, int *b );
-
 enum SWWriteMode { SW_OVERWRITE, SW_REPLACE, SW_XOR };
 enum SWColor { SW_RED, SW_GREEN, SW_BLUE };
 enum SWEnable { SW_DEPTH_TEST };
 
-void swBeginGraphics ( int w, int h );
-void swEndGraphics ();
-void swWriteFramebuffer ( char *filename );
-void swWritePixel ( int x, int y, int r, int g, int b );
-void swSetWriteMode ( int /* SWWriteMode */ mode );
-void swWaitOnEscape ();
-void swGetFramebufferSize ( int *w, int *h );
+void swBeginGraphics(int w, int h);
+void swEndGraphics();
+void swSetWriteMode(int /* SWWriteMode */ mode);
+void swWaitOnEscape();
+void swGetFramebufferSize(int *w, int *h);
 
 #define SW_NONE                           0
 #define SW_POINTS                         0x0000
@@ -189,13 +167,3 @@ void swLookAt(float from[3], float at[3], float up[3]);
 
 //not related to OpenGL:
 void swInitialize();
-
-//extra functions:
-void swWriteFramebufferBMP(char *filename );
-
-//TODO - replace this with a GLUT-style loop
-void swWindow_NoGL_Update();
-
-//#ifdef __cplusplus
-//}
-//#endif

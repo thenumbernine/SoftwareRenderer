@@ -185,102 +185,36 @@ struct ostream_op {
 	}
 };
 
-//// 2D vectors
+//// n-D vectors
 
-#define VEC2ELEM(i)	(i).x,(i).y
-	
-
-template<typename T>
-struct vec2 : public 
-	assign<vec2<T>>,
-	add_op<vec2<T>>,
-	sub_op<vec2<T>>,
-	mul_op<vec2<T>,T>,
-	div_op<vec2<T>,T>,
-	eq_op<vec2<T>>,
-	ostream_op<vec2<T>>
+template<int dim_, typename T, typename Parent>
+struct vec_base : public 
+	assign<Parent>,
+	add_op<Parent>,
+	sub_op<Parent>,
+	mul_op<Parent,T>,
+	div_op<Parent,T>,
+	eq_op<Parent>,
+	ostream_op<Parent>
 {
 	using scalar = T;
-	
-	enum { dim = 2 };
-	template<int i> inline T& get();
-	template<int i> inline const T& get() const;
-
-	T x, y;
-
-	vec2() : x(0), y(0) {}
-	vec2(T x_, T y_) : x(x_), y(y_) {}
-
-	T *fp() { return &x; }
-	const T *fp() const { return &x; }
+	enum { dim = dim_ };
 };
 
-using vec2f = vec2<float>;
-
-//hmm... how to make this flexible
-template<typename T> template<> inline T& vec2<T>::get<0>() { return x; };
-template<typename T> template<> inline T& vec2<T>::get<1>() { return y; };
-
-template<typename T> template<> inline const T& vec2<T>::get<0>() const { return x; };
-template<typename T> template<> inline const T& vec2<T>::get<1>() const { return y; };
-
+template<int dim, typename T>
+struct vec : public vec_base<dim, T, vec<dim,T>> {
+};
 
 //ostream
 
-template<typename T>
-inline std::ostream& operator<<(std::ostream& o, const vec2<T>& v) {
+template<int dim, typename T>
+inline std::ostream& operator<<(std::ostream& o, const vec<dim,T>& v) {
 	v.output(o);
 	return o;
 }
 
-//// 3D vectors
-
-#define VEC3ELEM(i)	(i).x,(i).y,(i).z
-
-template<typename T>
-struct vec3 : public
-	assign<vec3<T>>,
-	add_op<vec3<T>>,
-	sub_op<vec3<T>>,
-	mul_op<vec3<T>,T>,
-	div_op<vec3<T>,T>,
-	eq_op<vec3<T>>,
-	ostream_op<vec3<T>>
-{
-	using scalar = T;
-
-	enum { dim = 3 };
-	template<int i> inline T& get();
-	template<int i> inline const T& get() const;
-
-	T x, y, z;
-
-	vec3() : x(0), y(0), z(0) {}
-	vec3(T x_, T y_, T z_) : x(x_), y(y_), z(z_) {}
-
-	T *fp() { return &x; }
-	const T *fp() const { return &x; }
-};
-
-using vec3f = vec3<float>;
-
-//hmm... how to make this flexible
-template<> template<> inline float& vec3<float>::get<0>() { return x; };
-template<> template<> inline float& vec3<float>::get<1>() { return y; };
-template<> template<> inline float& vec3<float>::get<2>() { return z; };
-
-template<> template<> inline const float& vec3<float>::get<0>() const { return x; };
-template<> template<> inline const float& vec3<float>::get<1>() const { return y; };
-template<> template<> inline const float& vec3<float>::get<2>() const { return z; };
-
 //unary
 
-#if 1
-template<typename T>
-inline T operator-(const vec3<T>& v) {
-	return vec3<T>(-v.x, -v.y, -v.z);
-}
-#else
 template<typename T>
 struct un_op {
 	template<int i>
@@ -292,82 +226,84 @@ struct un_op {
 	};
 };
 
-template<typename T>
-inline T operator-(const vec3<T>& v) {
+template<int dim, typename T>
+inline T operator-(const vec<dim,T>& v) {
 	T t;
-	Common::ForLoop<0, T::dim, un_op<vec3<T>>::vec_un>::exec(t, v);
+	Common::ForLoop<0, vec<dim,T>::dim, un_op<vec<dim,T>>::template vec_un>::exec(t, v);
 	return t;
 }
-#endif
 
 //linear interpolation
 
-template<typename T>
-inline vec3<T> vec3lerp(const vec3<T> &src, const vec3<T> &dst, typename vec3<T>::scalar coeff) {
-	typename vec3<T>::scalar one_minus = 1 - coeff;
-	return vec3<T>(
-		src.x * one_minus + dst.x * coeff,
-		src.y * one_minus + dst.y * coeff,
-		src.z * one_minus + dst.z * coeff);
+template<int dim, typename T>
+inline vec<dim,T> vec3lerp(const vec<dim,T> &src, const vec<dim,T> &dst, typename vec<dim,T>::scalar coeff) {
+	typename vec<dim,T>::scalar one_minus = 1 - coeff;
+	return src * one_minus + dst * coeff;
 }
 
 //tensor operations
 
 	//dot product
-template<typename T>
-inline T dot(const vec3<T> &a, const vec3<T> &b) {
-	return a.x * b.x + a.y * b.y + a.z * b.z;
-}
-
-	//cross product
-template<typename T>
-inline vec3<T> cross(const vec3<T> &a, const vec3<T> &b) {
-	return vec3<T>(
-		a.y * b.z - a.z * b.y,
-		a.z * b.x - a.x * b.z,
-		a.x * b.y - a.y * b.x);
-}
 
 template<typename T>
-inline std::ostream& operator<<(std::ostream& o, const vec3<T>& v) {
-	v.output(o);
-	return o;
+struct vec_sum {
+	using scalar = typename T::scalar;
+	template<int i>
+	struct op {
+		static bool exec(scalar& sum, const T& a, const T& b) {
+			sum += a.template get<i>() * b.template get<i>();
+			return false;
+		}
+	};
+};
+
+template<int dim, typename T>
+inline T dot(const vec<dim,T> &a, const vec<dim,T> &b) {
+	T sum = T();
+	Common::ForLoop<0, vec<dim,T>::dim, vec_sum<vec<dim,T>>::template op>::exec(sum, a, b);
+	return sum;
 }
+
 
 //magnitude
 
 	//L-2
 
-template<typename T>
-inline T vecLengthSq(const vec3<T> &v) {
+template<int dim, typename T>
+inline T vecLengthSq(const vec<dim,T> &v) {
 	return dot(v,v);
 }
 
-template<typename T>
-inline T vecLength(const vec3<T> &v) {
+template<int dim, typename T>
+inline T vecLength(const vec<dim,T> &v) {
 	return (T)sqrt(dot(v,v));
 }
 
 	//L-Infinite
 
 template<typename T>
-inline T vecLengthLInf(const vec3<T> &v) {
-	//start with |x|
-	T a = v.x < 0 ? -v.x : v.x;
-	//compare to |y|
-	T b = v.y < 0 ? -v.y : v.y;
-	if (a < b) a = b;
-	//compare to |z|
-	b = v.z < 0 ? -v.z : v.z;
-	if (a < b) a = b;
-	//return the greatest of all three
-	return a;
+struct vec_linflen {
+	using scalar = typename T::scalar;
+	template<int i>
+	struct op {
+		static bool exec(scalar& result, const T& v) {
+			result = std::max(result, std::abs(v.template get<i>()));
+			return false;
+		}
+	};
+};
+
+template<int dim, typename T>
+inline T vecLengthLInf(const vec<dim,T> &v) {
+	T result = std::abs(v.template get<0>());
+	Common::ForLoop<1, dim, vec_linflen<vec<dim,T>>::template op>::exec(result, v);
+	return result;
 }
 
 //normalization
 
-template<typename T>
-inline vec3<T> vecUnit(const vec3<T> &v) {
+template<int dim, typename T>
+inline vec<dim,T> vecUnit(const vec<dim,T> &v) {
 	T len = vecLength(v);
 	if (!len) {
 		return v;
@@ -376,15 +312,66 @@ inline vec3<T> vecUnit(const vec3<T> &v) {
 	}
 }
 
+
+
+//// 2D vectors
+
+#define VEC2ELEM(i)	(i).x,(i).y
+
+template<typename T>
+struct vec<2,T> : public vec_base<2,T,vec<2,T>> {
+	template<int i> inline T& get();
+	template<int i> inline const T& get() const;
+	
+	T x, y;
+
+	vec() : x(0), y(0) {}
+	vec(T x_, T y_) : x(x_), y(y_) {}
+
+	T *fp() { return &x; }
+	const T *fp() const { return &x; }
+};
+
+
+//// 3D vectors
+
+#define VEC3ELEM(i)	(i).x,(i).y,(i).z
+
+template<typename T>
+struct vec<3,T> : public vec_base<3,T,vec<3,T>> {
+	template<int i> inline T& get();
+	template<int i> inline const T& get() const;
+	
+	T x, y, z;
+
+	vec() : x(0), y(0), z(0) {}
+	vec(T x_, T y_, T z_) : x(x_), y(y_), z(z_) {}
+
+	T *fp() { return &x; }
+	const T *fp() const { return &x; }
+};
+
+//tensor operations
+	
+	//cross product
+
+template<typename T>
+inline vec<3,T> cross(const vec<3,T> &a, const vec<3,T> &b) {
+	return vec<3,T>(
+		a.y * b.z - a.z * b.y,
+		a.z * b.x - a.x * b.z,
+		a.x * b.y - a.y * b.x);
+}
+
 // useful functions
 
 template<typename T>
-inline vec3<T> vecPlaneNormal(const vec3<T> &a, const vec3<T> &b, const vec3<T> &c) {
+inline vec<3,T> vecPlaneNormal(const vec<3,T> &a, const vec<3,T> &b, const vec<3,T> &c) {
 	return cross(b - a, c - b);
 }
 
 template<typename T>
-inline vec3<T> vecUnitNormal(const vec3<T> &a, const vec3<T> &b, const vec3<T> &c) {
+inline vec<3,T> vecUnitNormal(const vec<3,T> &a, const vec<3,T> &b, const vec<3,T> &c) {
 	return vecUnit(cross(b - a, c - b));
 }
 
@@ -454,7 +441,7 @@ inline fixed_t fixedDiv(fixed_t x, fixed_t y) {
 		/
 		((int64_t)y)
 		) >> (32 - FIXED_FRACTION_BITS)
-		);
+	);
 }
 
 inline vec3fixed fixedMul(vec3fixed a, fixed_t b) {
@@ -482,53 +469,22 @@ inline std::ostream& operator<<(std::ostream& o, const vec3fixed& v) {
  * This class holds a quaternion, in <x,y,z,w> format.
  */
 template<typename T>
-struct quat : public 
-	assign<quat<T>>,
-	add_op<quat<T>>,
-	sub_op<quat<T>>,
-	mul_op<quat<T>,T>,
-	div_op<quat<T>,T>,
-	eq_op<quat<T>>,
-	ostream_op<quat<T>>
-{
-	using scalar = T;
-
-	enum { dim = 4 };
+struct quat : public vec_base<4,T,quat<T>> {
 	template<int i> inline T& get();
 	template<int i> inline const T& get() const;
 	
 	T x,y,z,w;
 
 	quat() : x(0), y(0), z(0), w(1) {}
-	quat(const vec3<T> &v, T w_) : x(v.x), y(v.y), z(v.z), w(w_) {}
+	quat(const vec<3,T> &v, T w_) : x(v.x), y(v.y), z(v.z), w(w_) {}
 	quat(T x_, T y_, T z_, T w_) : x(x_), y(y_), z(z_), w(w_) {}
 
 	T *fp() { return &x; }
 	const T *fp() const { return &x; }
 
-	vec3<T> *vp() { return (vec3<T> *)&x; }
-	const vec3<T> *vp() const { return (vec3<T> *)&x; }
+	vec<3,T> *vp() { return (vec<3,T> *)&x; }
+	const vec<3,T> *vp() const { return (vec<3,T> *)&x; }
 };
-
-using quatf = quat<float>;
-
-//hmm... how to make this flexible
-template<> template<> inline float& quat<float>::get<0>() { return x; };
-template<> template<> inline float& quat<float>::get<1>() { return y; };
-template<> template<> inline float& quat<float>::get<2>() { return z; };
-template<> template<> inline float& quat<float>::get<3>() { return w; };
-
-template<> template<> inline const float& quat<float>::get<0>() const { return x; };
-template<> template<> inline const float& quat<float>::get<1>() const { return y; };
-template<> template<> inline const float& quat<float>::get<2>() const { return z; };
-template<> template<> inline const float& quat<float>::get<3>() const { return w; };
-
-
-/** 
- * This quaternion represents the identity quaternion.
- * TODO - put this in one spot and 'extern' it - to save that tiny bit of memory
- */
-const static quatf quat4fIdentity(0,0,0,1);
 
 //multiplication
 
@@ -553,8 +509,9 @@ inline quat<T> operator*(const quat<T> &q, const quat<T> &r) {
 
 //conjugation
 
-inline quatf quatConj(const quatf &q) {
-	return quatf(q.x, q.y, q.z, -q.w);
+template<typename T>
+inline quat<T> quatConj(const quat<T> &q) {
+	return quat<T>(q.x, q.y, q.z, -q.w);
 }
 
 //dot product
@@ -622,7 +579,7 @@ inline quat<T> angleAxisToQuat(const quat<T> &q) {
 	T halfangle = q.w * (T)M_PI / 360.f;
 	T scale = (T)sin(halfangle);
 
-	return quatf(
+	return quat<T>(
 		q.x * scale,
 		q.y * scale,
 		q.z * scale,
@@ -635,7 +592,7 @@ inline quat<T> angleAxisToQuat(const quat<T> &q) {
  * for some vec3f 'v'.
  */
 template<typename T>
-inline quat<T> quatExp(const vec3<T> &a) {
+inline quat<T> quatExp(const vec<3,T> &a) {
 	T length = vecLength(a);
 	if (!length) {
 		return quat<T>(0,0,0,1);
@@ -654,13 +611,13 @@ inline quat<T> quatExp(const vec3<T> &a) {
  * This is mathematically correct only when 'q' is a unit quaternion.
  */
 template<typename T>
-inline vec3<T> quatRotate(const quat<T> &q, const vec3<T> &v) {
+inline vec<3,T> quatRotate(const quat<T> &q, const vec<3,T> &v) {
 	T w2x2 = (q.w + q.x) * (q.w - q.x);
 	T w2y2 = (q.w + q.y) * (q.w - q.y);
 	T x2z2 = (q.x + q.z) * (q.x - q.z);
 	T y2z2 = (q.y + q.z) * (q.y - q.z);
 
-	return vec3<T>(
+	return vec<3,T>(
 		v.x * (w2y2 + x2z2) + 2.f*(v.y * (q.x * q.y - q.w * q.z) + v.z * (q.x * q.z + q.w * q.y)),
 		v.y * (w2x2 + y2z2) + 2.f*(v.z * (q.y * q.z - q.w * q.x) + v.x * (q.x * q.y + q.w * q.z)),
 		v.z * (w2y2 - x2z2) + 2.f*(v.x * (q.x * q.z - q.w * q.y) + v.y * (q.y * q.z + q.w * q.x)));
@@ -671,8 +628,8 @@ inline vec3<T> quatRotate(const quat<T> &q, const vec3<T> &v) {
  * and returning the first column vector components.
  */
 template<typename T>
-inline vec3<T> quatXAxis(const quat<T> &q) {
-	return vec3<T>(
+inline vec<3,T> quatXAxis(const quat<T> &q) {
+	return vec<3,T>(
 		1 - 2 * (q.y * q.y + q.z * q.z),
 		2 * (q.x * q.y + q.z * q.w),
 		2 * (q.x * q.z - q.w * q.y));
@@ -683,8 +640,8 @@ inline vec3<T> quatXAxis(const quat<T> &q) {
  * and returning the first column vector components.
  */
 template<typename T>
-inline vec3<T> quatYAxis(const quat<T> &q) {
-	return vec3<T>(
+inline vec<3,T> quatYAxis(const quat<T> &q) {
+	return vec<3,T>(
 		2 * (q.x * q.y - q.w * q.z),
 		1 - 2 * (q.x * q.x + q.z * q.z),
 		2 * (q.y * q.z + q.w * q.x));
@@ -695,8 +652,8 @@ inline vec3<T> quatYAxis(const quat<T> &q) {
  * and returning the first column vector components.
  */
 template<typename T>
-inline vec3<T> quatZAxis(const quat<T> &q) {
-	return vec3<T>(
+inline vec<3,T> quatZAxis(const quat<T> &q) {
+	return vec<3,T>(
 		2 * (q.x * q.z + q.w * q.y),
 		2 * (q.y * q.z - q.w * q.x),
 		1 - 2 * (q.x * q.x + q.y * q.y));
@@ -715,7 +672,8 @@ inline std::ostream& operator<<(std::ostream& o, const quat<T>& v) {
  * Maybe I'll make a 3x3 class later...
  * Maybe even a 3x4 for humor's sake
  */
-class mat44f {
+template<typename T>
+class mat44 {
 public:
 
 	/*
@@ -728,12 +686,12 @@ public:
 	 * therefore we have fast access to the axis vectors
 	 */
 //	float m[4][4];
-	quatf x,y,z,w;
+	quat<T> x,y,z,w;
 
 	/**
 	 * constructor: identity matrix
 	 */
-	mat44f() 
+	mat44() 
 		: x(1,0,0,0)
 		, y(0,1,0,0)
 		, z(0,0,1,0)
@@ -743,7 +701,7 @@ public:
 	/**
 	 * constructor: real analogy. scaled identity.
 	 */
-	mat44f(float r) 
+	mat44(T r) 
 		: x(r,0,0,0)
 		, y(0,r,0,0)
 		, z(0,0,r,0)
@@ -755,60 +713,56 @@ public:
 	 * so they'll look transposed when you write them out
 	 * but you'll be able to expand axis vectors into the parameters more quickly
 	 */
-	mat44f(	float xx, float xy, float xz, float xw,
-			float yx, float yy, float yz, float yw,
-			float zx, float zy, float zz, float zw,
-			float wx, float wy, float wz, float ww)
+	mat44(	T xx, T xy, T xz, T xw,
+			T yx, T yy, T yz, T yw,
+			T zx, T zy, T zz, T zw,
+			T wx, T wy, T wz, T ww)
 		: x(xx, xy, xz, xw)
 		, y(yx, yy, yz, yw)
 		, z(zx, zy, zz, zw)
 		, w(wx, wy, wz, ww)
 	{}
 
-	vec3f transformVector(const vec3f &a) const {		//with vectors, assume w component is 0
-		return vec3f(
+	vec<3,T> transformVector(const vec<3,T> &a) const {		//with vectors, assume w component is 0
+		return vec<3,T>(
 			x.x * a.x + y.x * a.y + z.x * a.z,
 			x.y * a.x + y.y * a.y + z.y * a.z,
 			x.z * a.x + y.z * a.y + z.z * a.z);
 	}
 
-	float *fp() {
-		return &x.x;
-	}
+	T *fp() { return &x.x; }
+	const T *fp() const { return &x.x; }
 
-	const float *fp() const {
-		return &x.x;
-	}
-
-	mat44f transpose() {
-		return mat44f(
+	mat44 transpose() {
+		return mat44(
 			x.x, y.x, z.x, w.x,
 			x.y, y.y, z.y, w.y,
 			x.z, y.z, z.z, w.z,
 			x.w, y.w, z.w, w.w);
 	}
-
 };
 
-inline quatf operator*(const mat44f &a, const quatf &b) {
-	return quatf(
+template<typename T>
+inline quat<T> operator*(const mat44<T> &a, const quat<T> &b) {
+	return quat<T>(
 		a.x.x * b.x + a.y.x * b.y + a.z.x * b.z + a.w.x * b.w,
 		a.x.y * b.x + a.y.y * b.y + a.z.y * b.z + a.w.y * b.w,
 		a.x.z * b.x + a.y.z * b.y + a.z.z * b.z + a.w.z * b.w,
 		a.x.w * b.x + a.y.w * b.y + a.z.w * b.z + a.w.w * b.w);
 }
 
-inline mat44f operator*(const mat44f &a, const mat44f &b) {
-	mat44f ret;
-	const float *fa = (const float *)(&a.x.x);
-	const float *fb = (const float *)(&b.x.x);
-	float *fr = (float *)(&ret.x.x);
+template<typename T>
+inline mat44<T> operator*(const mat44<T> &a, const mat44<T> &b) {
+	mat44<T> ret;
+	const T *fa = (const T *)(&a.x.x);
+	const T *fb = (const T *)(&b.x.x);
+	T *fr = (T *)(&ret.x.x);
 	for (int i = 0; i < 4; i++) {			//dest column
 		for (int j = 0; j < 4; j++) {		//dest row
-			float s = 0;
+			T s = 0;
 			for (int k = 0; k < 4; k++) {
-				float a0 = fa[ j + (k << 2) ];
-				float a1 = fb[ k + (i << 2) ];
+				T a0 = fa[ j + (k << 2) ];
+				T a1 = fb[ k + (i << 2) ];
 				s += a0 * a1;
 			}
 			fr[ j + (i << 2) ] = s;
@@ -817,11 +771,13 @@ inline mat44f operator*(const mat44f &a, const mat44f &b) {
 	return ret;
 }
 
-inline mat44f operator*=(mat44f &a, const mat44f &b) {
+template<typename T>
+inline mat44<T> operator*=(mat44<T> &a, const mat44<T> &b) {
 	return (a = a * b);
 }
 
-inline bool operator==(const mat44f &a, const mat44f &b) {
+template<typename T>
+inline bool operator==(const mat44<T> &a, const mat44<T> &b) {
 	return a.x.x == b.x.x
 		&& a.x.y == b.x.y
 		&& a.x.z == b.x.z
@@ -843,12 +799,8 @@ inline bool operator==(const mat44f &a, const mat44f &b) {
 		&& a.w.w == b.w.w;
 }
 
-//making MSVC5 able to use this with mat44f
-inline bool operator<(const mat44f &a, const mat44f &b) {
-	return a.x.x < b.x.x;
-}
-
-inline std::ostream& operator<<(std::ostream& o, const mat44f& m) {
+template<typename T>
+inline std::ostream& operator<<(std::ostream& o, const mat44<T>& m) {
 	return o
 		<< "{" << m.x
 		<< ", " << m.y
@@ -871,20 +823,21 @@ inline std::ostream& operator<<(std::ostream& o, const mat44f& m) {
  * for R a R^3x3 orthonormal rotation matrix represented as a quaternion
  * and T a R^3 vector
  */
-class basis_t {
+template<typename T>
+class basis {
 public:
-	quatf r;
-	vec3f t;
+	quat<T> r;
+	vec<3,T> t;
 
 	/**
 	 * constructs a default identity quaternion and zero vector
 	 */
-	basis_t() {}
+	basis() {}
 
 	/**
 	 * constructs a basis with the specified orientation and translation
 	 */
-	basis_t(const quatf &r_, const vec3f &t_) : r(r_), t(t_) {}
+	basis(const quat<T> &r_, const vec<3,T> &t_) : r(r_), t(t_) {}
 
 	/**
 	* returns a * b
@@ -892,31 +845,32 @@ public:
 	* [Ra Ta] [Rb Tb]   [Ra*Rb  Ra*Tb + Ta]
 	* [0  1 ]*[0  1 ] = [  0         1    ]
 	*/
-	basis_t operator*(const basis_t &b) const {
-		return basis_t(r * b.r, quatRotate(r, b.t) + t);
+	basis operator*(const basis &b) const {
+		return basis(r * b.r, quatRotate(r, b.t) + t);
 	}
 
-	basis_t operator*=(const basis_t &b) {
+	basis operator*=(const basis &b) {
 		return *this = *this * b;
 	}
 };
 
 //orthogonal basis, uniform scale, with transform components
-class basisu_t {
+template<typename T>
+class basisu {
 public:
-	quatf r;
-	float s;
-	vec3f t;
+	quat<T> r;
+	T s;
+	vec<3,T> t;
 
 	/**
 	 * constructs a default identity quaternion, zero vector, and unit uniform scale
 	 */
-	basisu_t() : s(1) {}
+	basisu() : s(1) {}
 
 	/**
 	 * constructs a basis with the specified orientation scale and translation
 	 */
-	basisu_t(const quatf &r_, float s_, const vec3f &t_) : r(r_), s(s_), t(t_) {}
+	basisu(const quat<T> &r_, T s_, const vec<3,T> &t_) : r(r_), s(s_), t(t_) {}
 
 	/**
 	* returns a * b
@@ -924,31 +878,32 @@ public:
 	* [Ra*Sa Ta] [Rb*Sb Tb]   [Ra*Sa*Rb*Sb	Ra*Sa*Tb+Ta ]	[(Ra*Rb)*(Sa*Sb) Ra*Sa*Tb+Ta]
 	* [0     1 ]*[0     1 ] = [0			1			] = [0				 1			]
 	*/
-	basisu_t operator*(const basisu_t &b) const {
-		return basisu_t(r * b.r, s * b.s, quatRotate(r, b.t) * s + t);
+	basisu operator*(const basisu &b) const {
+		return basisu(r * b.r, s * b.s, quatRotate(r, b.t) * s + t);
 	}
 
-	basisu_t operator*=(const basisu_t &b) {
+	basisu operator*=(const basisu &b) {
 		return *this = *this * b;
 	}
 };
 
 //orthogonal basis, non-uniform scale, with transform components
-class basisn_t {
+template<typename T>
+class basisn {
 public:
-	quatf r;
-	vec3f s;
-	vec3f t;
+	quat<T> r;
+	vec<3,T> s;
+	vec<3,T> t;
 
 	/**
 	 * constructs a default identity quaternion, zero vector, and unit scale vector
 	 */
-	basisn_t() : s(1,1,1) {}
+	basisn() : s(1,1,1) {}
 
 	/**
 	 * constructs a basis with the specified orientation scale and translation
 	 */
-	basisn_t(const quatf &r_, const vec3f &s_, const vec3f &t_) : r(r_), s(s_), t(t_) {}
+	basisn(const quat<T>& r_, const vec<3,T>& s_, const vec<3,T>& t_) : r(r_), s(s_), t(t_) {}
 
 	/**
 	* returns a * b
@@ -997,25 +952,25 @@ struct plane : public quat<T> {
 	/**
 	 * constructs a plane from the specified normal at zero distance
 	 */
-	plane(const vec3<T> &normal) : super(normal, 0) {}
+	plane(const vec<3,T> &normal) : super(normal, 0) {}
 
 	/**
 	 * constructs a plane from the specified normal at the specified distance
 	 */
-	plane(const vec3<T> &normal, T dist) {
+	plane(const vec<3,T> &normal, T dist) {
 		*super::vp() = normal;
 		super::w = -dist;
 	}
 
-	vec3<T> *normal() { return super::vp(); }
-	const vec3<T> *normal() const { return super::vp(); }
+	vec<3,T> *normal() { return super::vp(); }
+	const vec<3,T> *normal() const { return super::vp(); }
 	T *negDist() { return &this->super::w; }
 	const T *negDist() const { return &this->super::w; }
 
 	/**
 	 * calc the 'dist' variable based upon the current 'normal' and the point provided
 	 */
-	void calcDist(const vec3<T> &v) {
+	void calcDist(const vec<3,T> &v) {
 		*negDist() = -dot(*super::vp(), v);
 	}
 };
@@ -1025,19 +980,18 @@ struct plane : public quat<T> {
  * creates the normal assuming a right-handed system from points a->b->c
  */
 template<typename T>
-inline plane<T> planeBuildUnit(const vec3<T> &a, const vec3<T> &b, const vec3<T> &c) {
+inline plane<T> planeBuildUnit(const vec<3,T> &a, const vec<3,T> &b, const vec<3,T> &c) {
 	plane<T> plane(vecUnitNormal(a,b,c));
 	plane.calcDist(a);
 	return plane;
 }
 
-using plane_t = plane<float>;
-
 /**
  * same as above but with non-normalized normal
  */
-inline plane_t planeBuild(const vec3f &a, const vec3f &b, const vec3f &c) {
-	plane_t plane(vecPlaneNormal(a,b,c));
+template<typename T>
+inline plane<T> planeBuild(const vec<3,T> &a, const vec<3,T> &b, const vec<3,T> &c) {
+	plane<T> plane(vecPlaneNormal(a,b,c));
 	plane.calcDist(a);
 	return plane;
 }
@@ -1047,7 +1001,8 @@ inline plane_t planeBuild(const vec3f &a, const vec3f &b, const vec3f &c) {
  * distance is scaled by the magnitude of the plane's normal
  * a negative distance implies the point is on the back of the plane
  */
-inline float planePointDist(const plane_t &plane, const vec3f &v) {
+template<typename T>
+inline T planePointDist(const plane<T> &plane, const vec<3,T> &v) {
 	return dot(*plane.normal(), v) + *plane.negDist();
 }
 
@@ -1056,15 +1011,17 @@ inline float planePointDist(const plane_t &plane, const vec3f &v) {
  * the distance is scaled by the inverse of the plane normal L2 length
  * use this with planes containing non-unit normal vectors
  */
-inline float planePointDistNormalized(const plane_t &plane, const vec3f &v) {
+template<typename T>
+inline T planePointDistNormalized(const plane<T> &plane, const vec<3,T> &v) {
 	return planePointDist(plane, v) / vecLength(*plane.normal());
 }
 
 /**
  * builds a plane with the specified normal placed on the specified point
  */
-inline plane_t planeBuildNormalPoint(const vec3f &n, const vec3f &p) {
-	plane_t plane(n);
+template<typename T>
+inline plane<T> planeBuildNormalPoint(const vec<3,T> &n, const vec<3,T> &p) {
+	plane<T> plane(n);
 	plane.calcDist(p);
 	return plane;
 }
@@ -1073,7 +1030,8 @@ inline plane_t planeBuildNormalPoint(const vec3f &n, const vec3f &p) {
  * returns the point 'v' projected to the plane 'plane'
  * assumes plane.normal is a unit vector
  */
-inline vec3f planeProjectPoint(const plane_t &plane, const vec3f &v) {
+template<typename T>
+inline vec<3,T> planeProjectPoint(const plane<T> &plane, const vec<3,T> &v) {
 	return v - (*plane.normal()) * planePointDist(plane, v);
 }
 
@@ -1081,7 +1039,8 @@ inline vec3f planeProjectPoint(const plane_t &plane, const vec3f &v) {
  * returns the point 'v' projected to the plane 'plane'
  * compensates for plane.normal's magnitude
  */
-inline vec3f planeProjectPointNormalized(const plane_t &plane, const vec3f &v) {
+template<typename T>
+inline vec<3,T> planeProjectPointNormalized(const plane<T> &plane, const vec<3,T> &v) {
 	return v + (*plane.normal()) * (-((*plane.negDist()) + dot(*plane.normal(), v) / dot(*plane.normal(), *plane.normal())));
 }
 
@@ -1099,22 +1058,22 @@ struct line {
 	line(const T &pos_, const T &dir_) : pos(pos_), dir(dir_) {}
 };
 
-using line3f = line<vec3f>;
-
 /**
  * returns the coefficient 'c' for which
  * line.pos + line.dir * c lies on the specified plane
  */
-inline float linePlaneIntersectFraction(const line3f &line, const plane_t &plane) {
-	float src_dist = planePointDist(plane, line.pos);
-	float dest_dist = planePointDist(plane, line.pos + line.dir);
+template<typename T>
+inline T linePlaneIntersectFraction(const line<vec<3,T>> &line, const plane<T> &plane) {
+	T src_dist = planePointDist(plane, line.pos);
+	T dest_dist = planePointDist(plane, line.pos + line.dir);
 	return src_dist / (src_dist - dest_dist);
 }
 
 /**
  * returns the point at which the line and plane intersect
  */
-inline vec3f linePlaneIntersect(const line3f &line, const plane_t &plane) {
+template<typename T>
+inline vec<3,T> linePlaneIntersect(const line<vec<3,T>> &line, const plane<T> &plane) {
 	return line.pos + line.dir * linePlaneIntersectFraction(line, plane);
 }
 
@@ -1162,4 +1121,59 @@ public:
 	const T *vp() const { return &min; }
 };
 
+
+// specific types:
+
+
+using vec2f = vec<2,float>;
+
+//hmm... how to make this flexible
+template<> template<> inline float& vec<2,float>::get<0>() { return x; };
+template<> template<> inline float& vec<2,float>::get<1>() { return y; };
+
+template<> template<> inline const float& vec<2,float>::get<0>() const { return x; };
+template<> template<> inline const float& vec<2,float>::get<1>() const { return y; };
+
+using vec3f = vec<3,float>;
+
+//hmm... how to make this flexible
+template<> template<> inline float& vec<3,float>::get<0>() { return x; };
+template<> template<> inline float& vec<3,float>::get<1>() { return y; };
+template<> template<> inline float& vec<3,float>::get<2>() { return z; };
+
+template<> template<> inline const float& vec<3,float>::get<0>() const { return x; };
+template<> template<> inline const float& vec<3,float>::get<1>() const { return y; };
+template<> template<> inline const float& vec<3,float>::get<2>() const { return z; };
+
+using quatf = quat<float>;
+
+//hmm... how to make this flexible
+template<> template<> inline float& quat<float>::get<0>() { return x; };
+template<> template<> inline float& quat<float>::get<1>() { return y; };
+template<> template<> inline float& quat<float>::get<2>() { return z; };
+template<> template<> inline float& quat<float>::get<3>() { return w; };
+
+template<> template<> inline const float& quat<float>::get<0>() const { return x; };
+template<> template<> inline const float& quat<float>::get<1>() const { return y; };
+template<> template<> inline const float& quat<float>::get<2>() const { return z; };
+template<> template<> inline const float& quat<float>::get<3>() const { return w; };
+
+using mat44f = mat44<float>;
+
+using basis_t = basis<float>;
+using basisu_t = basisu<float>;
+using basisn_t = basisn<float>;
+
+using plane_t = plane<float>;
+
+using line3f = line<vec3f>;
+
 using box3f = box<vec3f>;
+
+/** 
+ * This quaternion represents the identity quaternion.
+ * TODO - put this in one spot and 'extern' it - to save that tiny bit of memory
+ */
+const static quatf quat4fIdentity(0,0,0,1);
+
+

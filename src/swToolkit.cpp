@@ -31,7 +31,9 @@ static void (*swutCallbackMotion)(int x, int y) = nullptr;
 static void (*swutCallbackPassiveMotion)(int x, int y) = nullptr;
 
 
-void swutInit(int *argc, char **argv) {}	//not implemented yet
+void swutInit(int *argc, char **argv) {
+	swInitialize();
+}	//not implemented yet
 
 void swutInitDisplayMode(int flags) {}		//not implemented yet
 

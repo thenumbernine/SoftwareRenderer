@@ -85,16 +85,8 @@ void View::setProjection(int flags, float aspectRatio) const {
 	glznear = znear;
 	glzfar = zfar;
 
-//std::cout << "aspectRatio " << aspectRatio << std::endl;
-//std::cout << "glleft " << glleft << std::endl;
-//std::cout << "glright " << glright << std::endl;
-//std::cout << "glbottom " << glbottom << std::endl;
-//std::cout << "gltop " << gltop << std::endl;
-//std::cout << "glznear " << glznear << std::endl;
-//std::cout << "glzfar " << glzfar << std::endl;
 	if (!ortho)	swFrustum(glleft, glright, glbottom, gltop, glznear, glzfar);
 	else		swOrtho(glleft, glright, glbottom, gltop, glznear, glzfar);
-//exit(0);
 }
 
 //////// modelview matrix transformation calls

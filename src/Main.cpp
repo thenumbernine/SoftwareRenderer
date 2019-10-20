@@ -153,8 +153,6 @@ static int displayWidth = 1;
 static int displayHeight = 1;
 
 void resize(int w, int h) {
-//std::cout << "resize " << w << ", " << h << std::endl;
-//exit(0);
 	displayWidth = w;
 	displayHeight = h;
 	int hw = w >> 1;

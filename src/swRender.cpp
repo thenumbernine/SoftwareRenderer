@@ -660,8 +660,6 @@ void swDrawPolygons() {
 
 void swDrawLine(Vertex v0, Vertex v1) {
 
-#if 1	//enable to enable all line rendering
-
 	//do a midpoint rule thingy
 
 	if (!swBMPBuffer) return;
@@ -680,62 +678,6 @@ void swDrawLine(Vertex v0, Vertex v1) {
 	int ymin = (int)vmin->coord.y;
 	int xmax = (int)vmax->coord.x;
 	int ymax = (int)vmax->coord.y;
-
-#if 0 //this is the left-edge scan from the handout:
-
-	int x = xmin;
-	int num = xmax - xmin;
-	int dy = ymax - ymin;
-	int denom = dy;
-	int inc = denom;
-
-	if (!dy) return;
-
-	quatf color = vmin->fr.color;
-	quatf dc = (vmax->fr.color - vmin->fr.color) / (float)(ymax - ymin + 1);
-
-	for (int y = ymin; y <= ymax; y++) {
-
-		//sw reference:
-		swWritePixel(x,y,
-			(int)(255.f * color.x),
-			(int)(255.f * color.y),
-			(int)(255.f * color.z));
-
-		//what a mess...
-		inc += num;
-		if (num > 0) {
-			while (inc > denom) {
-				x++;
-				inc -= denom;
-
-				//sw reference:
-				swWritePixel(x,y,
-					(int)(255.f * color.x),
-					(int)(255.f * color.y),
-					(int)(255.f * color.z));
-
-				if (x >= xmax) break;
-
-			}
-		} else {
-			while (inc < -denom) {
-				x--;
-				inc += denom;
-
-				//sw reference:
-				swWritePixel(x,y,
-					(int)(255.f * color.x),
-					(int)(255.f * color.y),
-					(int)(255.f * color.z));
-
-				if (x <= xmin) break;
-			}
-		}
-
-		color += dc;
-	}
-#else	//slow but steady
 
 	int useDepthTest = swDepthBuffer && getSWStateBit(SW_BIT_DEPTH_TEST);
 
@@ -778,10 +720,6 @@ void swDrawLine(Vertex v0, Vertex v1) {
 		v += dv;
 		c += dc;
 	}
-	
-#endif
-
-#endif
 }
 
 void swDrawLines() {

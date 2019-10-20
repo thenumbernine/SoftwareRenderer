@@ -50,11 +50,6 @@ void Viewport::shutdownViewport() {
 }
 
 void Viewport::render() {
-//std::cout << "viewport width " << width << std::endl;
-//std::cout << "viewport height " << height << std::endl;
-//std::cout << "aspect ratio " << getAspectRatio() << std::endl;
-//exit(1);
-
 	setupViewport();
 
 	if (view) {
