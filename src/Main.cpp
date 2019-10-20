@@ -509,7 +509,7 @@ void init_views() {
 		_VIEW_ZNEAR,
 		_VIEW_ZFAR,
 		vec3f(-_VIEW_INIT_DIST,0,0),
-		quat4fIdentity);
+		quatf());
 #endif
 	views[VIEW_3D].set(
 		scene,
@@ -522,7 +522,7 @@ void init_views() {
 //		vec3f(-3.289347f, -1.090798f, -14.594609f),
 //		quatf(-0.461630f, 0.474959f, -0.405921f, -0.629714f));
 		vec3f(-_VIEW_INIT_DIST,0,0),
-		quat4fIdentity);
+		quatf());
 }
 
 //only call this after init_views() and scene.init() have been called

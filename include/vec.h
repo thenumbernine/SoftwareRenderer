@@ -35,12 +35,20 @@
 #endif
 
 
+template<typename T, int index>
+struct vec_get {
+	//static inline T& get(vec<dim,T>& v)
+	//static inline const T& get(const vec<dim,T>& v)
+};
+
+
+
 template<typename T>
 struct assign {
 	template<int i>
 	struct vec_assign {
 		static bool exec(T& v, const T& o) {
-			v.template get<i>() = o.template get<i>();
+			vec_get<T, i>::get(v) = vec_get<T, i>::get(o);
 			return false;
 		}
 	};
@@ -57,7 +65,7 @@ struct add_op {
 	template<int i>
 	struct vec_add {
 		static bool exec(T& c, const T& a, const T& b) {
-			c.template get<i>() = a.template get<i>() + b.template get<i>();
+			vec_get<T, i>::get(c) = vec_get<T, i>::get(a) + vec_get<T, i>::get(b);
 			return false;
 		}
 	};
@@ -80,7 +88,7 @@ struct sub_op {
 	template<int i>
 	struct vec_sub {
 		static bool exec(T& c, const T& a, const T& b) {
-			c.template get<i>() = a.template get<i>() - b.template get<i>();
+			vec_get<T, i>::get(c) = vec_get<T, i>::get(a) - vec_get<T, i>::get(b);
 			return false;
 		}
 	};
@@ -103,7 +111,7 @@ struct mul_op {
 	template<int i>
 	struct vec_mul {
 		static bool exec(T& c, const T& a, const S& b) {
-			c.template get<i>() = a.template get<i>() * b;
+			vec_get<T, i>::get(c) = vec_get<T, i>::get(a) * b;
 			return false;
 		}
 	};
@@ -126,7 +134,7 @@ struct div_op {
 	template<int i>
 	struct vec_div {
 		static bool exec(T& c, const T& a, const S& b) {
-			c.template get<i>() = a.template get<i>() / b;
+			vec_get<T, i>::get(c) = vec_get<T, i>::get(a) / b;
 			return false;
 		}
 	};
@@ -149,7 +157,7 @@ struct eq_op {
 	template<int i>
 	struct vec_eq {
 		static bool exec(bool& result, const T& a, const T& b) {
-			result = result && (a.template get<i>() == b.template get<i>());
+			result = result && (vec_get<T, i>::get(a) == vec_get<T, i>::get(b));
 			return !result;
 		}
 	};
@@ -173,7 +181,7 @@ struct ostream_op {
 	struct vec_ostream {
 		static bool exec(std::ostream& o, const T& v) {
 			if (i != 0) o << ", ";
-			o << v.template get<i>();
+			o << vec_get<T, i>::get(v);
 			return false;
 		}
 	};
@@ -220,7 +228,7 @@ struct un_op {
 	template<int i>
 	struct vec_un {
 		static bool exec(T& c, const T& a) {
-			c.template get<i>() = -a.template get<i>();
+			vec_get<T, i>::get(c) = -vec_get<T, i>::get(a);
 			return false;
 		}
 	};
@@ -251,7 +259,7 @@ struct vec_sum {
 	template<int i>
 	struct op {
 		static bool exec(scalar& sum, const T& a, const T& b) {
-			sum += a.template get<i>() * b.template get<i>();
+			sum += vec_get<T, i>::get(a) * vec_get<T, i>::get(b);
 			return false;
 		}
 	};
@@ -287,7 +295,7 @@ struct vec_linflen {
 	template<int i>
 	struct op {
 		static bool exec(scalar& result, const T& v) {
-			result = std::max(result, std::abs(v.template get<i>()));
+			result = std::max(result, std::abs(vec_get<T, i>::get(v)));
 			return false;
 		}
 	};
@@ -295,7 +303,7 @@ struct vec_linflen {
 
 template<int dim, typename T>
 inline T vecLengthLInf(const vec<dim,T> &v) {
-	T result = std::abs(v.template get<0>());
+	T result = std::abs(vec_get<vec<dim, T>, 0>::get(v));
 	Common::ForLoop<1, dim, vec_linflen<vec<dim,T>>::template op>::exec(result, v);
 	return result;
 }
@@ -320,9 +328,6 @@ inline vec<dim,T> vecUnit(const vec<dim,T> &v) {
 
 template<typename T>
 struct vec<2,T> : public vec_base<2,T,vec<2,T>> {
-	template<int i> inline T& get();
-	template<int i> inline const T& get() const;
-	
 	T x, y;
 
 	vec() : x(0), y(0) {}
@@ -332,6 +337,17 @@ struct vec<2,T> : public vec_base<2,T,vec<2,T>> {
 	const T *fp() const { return &x; }
 };
 
+template<typename T>
+struct vec_get<vec<2,T>,0> {
+	static inline T& get(vec<2,T>& v) { return v.x; }
+	static inline const T& get(const vec<2,T>& v) { return v.x; }
+};
+
+template<typename T>
+struct vec_get<vec<2,T>,1> {
+	static inline T& get(vec<2,T>& v) { return v.y; }
+	static inline const T& get(const vec<2,T>& v) { return v.y; }
+};
 
 //// 3D vectors
 
@@ -339,9 +355,6 @@ struct vec<2,T> : public vec_base<2,T,vec<2,T>> {
 
 template<typename T>
 struct vec<3,T> : public vec_base<3,T,vec<3,T>> {
-	template<int i> inline T& get();
-	template<int i> inline const T& get() const;
-	
 	T x, y, z;
 
 	vec() : x(0), y(0), z(0) {}
@@ -349,6 +362,24 @@ struct vec<3,T> : public vec_base<3,T,vec<3,T>> {
 
 	T *fp() { return &x; }
 	const T *fp() const { return &x; }
+};
+
+template<typename T>
+struct vec_get<vec<3,T>,0> {
+	static inline T& get(vec<3,T>& v) { return v.x; }
+	static inline const T& get(const vec<3,T>& v) { return v.x; }
+};
+
+template<typename T>
+struct vec_get<vec<3,T>,1> {
+	static inline T& get(vec<3,T>& v) { return v.y; }
+	static inline const T& get(const vec<3,T>& v) { return v.y; }
+};
+
+template<typename T>
+struct vec_get<vec<3,T>,2> {
+	static inline T& get(vec<3,T>& v) { return v.z; }
+	static inline const T& get(const vec<3,T>& v) { return v.z; }
 };
 
 //tensor operations
@@ -395,8 +426,6 @@ struct vec3fixed : public
 	using scalar = fixed_t;
 
 	enum { dim = 3 };
-	template<int i> inline scalar& get();
-	template<int i> inline const scalar& get() const;
 
 	scalar x, y, z;
 	
@@ -407,15 +436,23 @@ struct vec3fixed : public
 	const scalar *ip() const { return &x; }
 };
 
-//hmm... how to make this flexible
-template<> inline fixed_t& vec3fixed::get<0>() { return x; };
-template<> inline fixed_t& vec3fixed::get<1>() { return y; };
-template<> inline fixed_t& vec3fixed::get<2>() { return z; };
+template<>
+struct vec_get<vec3fixed,0> {
+	static inline vec3fixed::scalar& get(vec3fixed& v) { return v.x; }
+	static inline const vec3fixed::scalar& get(const vec3fixed& v) { return v.x; }
+};
 
-template<> inline const fixed_t& vec3fixed::get<0>() const { return x; };
-template<> inline const fixed_t& vec3fixed::get<1>() const { return y; };
-template<> inline const fixed_t& vec3fixed::get<2>() const { return z; };
+template<>
+struct vec_get<vec3fixed,1> {
+	static inline vec3fixed::scalar& get(vec3fixed& v) { return v.y; }
+	static inline const vec3fixed::scalar& get(const vec3fixed& v) { return v.y; }
+};
 
+template<>
+struct vec_get<vec3fixed,2> {
+	static inline vec3fixed::scalar& get(vec3fixed& v) { return v.z; }
+	static inline const vec3fixed::scalar& get(const vec3fixed& v) { return v.z; }
+};
 
 //scaling
 
@@ -470,9 +507,6 @@ inline std::ostream& operator<<(std::ostream& o, const vec3fixed& v) {
  */
 template<typename T>
 struct quat : public vec_base<4,T,quat<T>> {
-	template<int i> inline T& get();
-	template<int i> inline const T& get() const;
-	
 	T x,y,z,w;
 
 	quat() : x(0), y(0), z(0), w(1) {}
@@ -484,6 +518,30 @@ struct quat : public vec_base<4,T,quat<T>> {
 
 	vec<3,T> *vp() { return (vec<3,T> *)&x; }
 	const vec<3,T> *vp() const { return (vec<3,T> *)&x; }
+};
+
+template<typename T>
+struct vec_get<quat<T>,0> {
+	static inline T& get(quat<T>& v) { return v.x; }
+	static inline const T& get(const quat<T>& v) { return v.x; }
+};
+
+template<typename T>
+struct vec_get<quat<T>,1> {
+	static inline T& get(quat<T>& v) { return v.y; }
+	static inline const T& get(const quat<T>& v) { return v.y; }
+};
+
+template<typename T>
+struct vec_get<quat<T>,2> {
+	static inline T& get(quat<T>& v) { return v.z; }
+	static inline const T& get(const quat<T>& v) { return v.z; }
+};
+
+template<typename T>
+struct vec_get<quat<T>,3> {
+	static inline T& get(quat<T>& v) { return v.w; }
+	static inline const T& get(const quat<T>& v) { return v.w; }
 };
 
 //multiplication
@@ -588,7 +646,7 @@ inline quat<T> angleAxisToQuat(const quat<T> &q) {
 
 /**
  * Returns the value of exp(v) = exp(ix + jy + kz) using quaternion mathematics.
- * Equivalent to 'angleAxisToQuat(quat4fNew(v.x, v.y, v.z, vecLength(v) / M_PI * 360.f))'
+ * Equivalent to 'angleAxisToQuat(quatf(v.x, v.y, v.z, vecLength(v) / M_PI * 360.f))'
  * for some vec3f 'v'.
  */
 template<typename T>
@@ -607,7 +665,7 @@ inline quat<T> quatExp(const vec<3,T> &a) {
 
 /**
  * Rotates vector 'v' by quaternion 'q' and returns the rotated vector.
- * This is equivalent to the operation 'q * quat4fNew(v.x,v.y,v.z,0) * quatConj(q)'
+ * This is equivalent to the operation 'q * quatf(v.x,v.y,v.z,0) * quatConj(q)'
  * This is mathematically correct only when 'q' is a unit quaternion.
  */
 template<typename T>
@@ -1094,8 +1152,8 @@ public:
 	template<int i>
 	struct stretch_for {
 		static bool exec(box<T>& b, const T& min, const T& max) {
-			if (min.template get<i>() < b.min.template get<i>()) b.min.template get<i>() = min.template get<i>();
-			if (max.template get<i>() > b.max.template get<i>()) b.max.template get<i>() = max.template get<i>();
+			if (vec_get<T,i>::get(min) < vec_get<T,i>::get(b.min)) vec_get<T,i>::get(b.min) = vec_get<T,i>::get(min);
+			if (vec_get<T,i>::get(max) > vec_get<T,i>::get(b.max)) vec_get<T,i>::get(b.max) = vec_get<T,i>::get(max);
 			return false;
 		}
 	};
@@ -1124,56 +1182,13 @@ public:
 
 // specific types:
 
-
 using vec2f = vec<2,float>;
-
-//hmm... how to make this flexible
-template<> template<> inline float& vec<2,float>::get<0>() { return x; };
-template<> template<> inline float& vec<2,float>::get<1>() { return y; };
-
-template<> template<> inline const float& vec<2,float>::get<0>() const { return x; };
-template<> template<> inline const float& vec<2,float>::get<1>() const { return y; };
-
 using vec3f = vec<3,float>;
-
-//hmm... how to make this flexible
-template<> template<> inline float& vec<3,float>::get<0>() { return x; };
-template<> template<> inline float& vec<3,float>::get<1>() { return y; };
-template<> template<> inline float& vec<3,float>::get<2>() { return z; };
-
-template<> template<> inline const float& vec<3,float>::get<0>() const { return x; };
-template<> template<> inline const float& vec<3,float>::get<1>() const { return y; };
-template<> template<> inline const float& vec<3,float>::get<2>() const { return z; };
-
 using quatf = quat<float>;
-
-//hmm... how to make this flexible
-template<> template<> inline float& quat<float>::get<0>() { return x; };
-template<> template<> inline float& quat<float>::get<1>() { return y; };
-template<> template<> inline float& quat<float>::get<2>() { return z; };
-template<> template<> inline float& quat<float>::get<3>() { return w; };
-
-template<> template<> inline const float& quat<float>::get<0>() const { return x; };
-template<> template<> inline const float& quat<float>::get<1>() const { return y; };
-template<> template<> inline const float& quat<float>::get<2>() const { return z; };
-template<> template<> inline const float& quat<float>::get<3>() const { return w; };
-
 using mat44f = mat44<float>;
-
 using basis_t = basis<float>;
 using basisu_t = basisu<float>;
 using basisn_t = basisn<float>;
-
 using plane_t = plane<float>;
-
 using line3f = line<vec3f>;
-
 using box3f = box<vec3f>;
-
-/** 
- * This quaternion represents the identity quaternion.
- * TODO - put this in one spot and 'extern' it - to save that tiny bit of memory
- */
-const static quatf quat4fIdentity(0,0,0,1);
-
-

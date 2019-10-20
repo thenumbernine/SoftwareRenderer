@@ -15,7 +15,7 @@ void ObjInst::reset() {
  
 	//transformations
 	basis.t = vec3f(0,0,0);
-	basis.r = quat4fIdentity;
+	basis.r = quatf();
 	scale = vec3f(1,1,1);
 
 	//title
