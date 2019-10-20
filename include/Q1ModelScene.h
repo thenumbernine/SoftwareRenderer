@@ -9,7 +9,51 @@
 #include <time.h>
 #include <memory>
 
+
 struct Q1ModelScene : public Scene {
+	enum ModelEnum {
+		MODEL_CUBE,
+		MODEL_CONE,
+		MODEL_QUAKE,
+		MODEL_TORUS,
+		MODEL_SPHERE,
+	};
+
+	enum RenderEnum {
+		RENDER_NONE,
+		RENDER_LINEAR,
+		RENDER_CYL,
+		RENDER_SPH,
+		RENDER_CEL,
+	};
+
+	enum TextureEnum {
+		TEX_NONE,
+		TEX_DEFAULT,
+		TEX_CHECKER,
+		TEX_CONTOUR,
+		TEX_CEL,
+		TEX_RGB,
+		TEX_NORMALIZE,
+	};
+
+	enum BorderEnum {
+		BORDER_REP,
+		BORDER_U_REP,
+		BORDER_CLMP,
+		BORDER_U_CLMP,
+		BORDER_V_REP,
+		BORDER_V_CLMP,
+		BORDER_W_REP,
+		BORDER_W_CLMP,
+		BORDER_V_CLMP2,
+	};
+
+	enum FillEnum {
+		FILL_NEAR,
+		FILL_LIN,
+	};
+	
 	Q1ModelScene();
 	virtual ~Q1ModelScene();
 	
@@ -26,7 +70,11 @@ struct Q1ModelScene : public Scene {
 	void setTexMat(int index, float val) {  texMat.fp()[index] = val; }
 
 //private:
-	int modelMode, renderMode, textureMode, borderMode[3], filterMode;
+	int modelMode;
+	int renderMode;
+	int textureMode;
+	int borderMode[3];
+	int filterMode;
 private:	
 	mat44f texMat;
 

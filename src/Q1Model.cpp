@@ -10,18 +10,21 @@
 
 using byte = uint8_t;
 
-void Q1Model::Reset() {
-	skin = nullptr;
+Q1Model::Q1Model(const char* filename)
+:	skin(),
+	vtx(),
+	tri(),
+	frame(),
+	num_poses(),
+	pose(),
+	normal()
+{
 	memset(&mdl, 0, sizeof(mdl));
-	vtx = nullptr;
-	tri = nullptr;
-	frame = nullptr;
-	num_poses = 0;
-	pose = nullptr;
-	normal = nullptr;
+	LoadFromFile(filename);
 }
 
-void Q1Model::Unload() {
+
+Q1Model::~Q1Model() {
 	//unalloc
 	if (skin) delete[] skin;
 	if (vtx) delete[] vtx;
@@ -29,9 +32,6 @@ void Q1Model::Unload() {
 	if (frame) delete[] frame;
 	if (pose) delete[] pose;
 	if (normal) delete[] normal;
-
-	//reset
-	Reset();
 }
 
 /*
@@ -329,7 +329,6 @@ void Q1Model::LoadFromBuffer(const char *read_buffer) {
 }
 
 void Q1Model::LoadFromFile(const char *filename) {
-	this->Unload();
 	std::string buffer = Common::File::read(filename);
 	LoadFromBuffer(buffer.c_str());
 }

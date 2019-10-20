@@ -199,7 +199,7 @@ void swVertex4f(float x, float y, float z, float w) {
 
 				if (!calcRefl) {
 					calcRefl = true;
-					reflVec = vecUnit(curNormal * ((curNormal % curCoord.vp()[0]) * 2.f) - curCoord.vp()[0]);
+					reflVec = vecUnit(curNormal * (dot(curNormal, curCoord.vp()[0]) * 2.f) - curCoord.vp()[0]);
 				}
 					
 				//assuming
@@ -207,7 +207,7 @@ void swVertex4f(float x, float y, float z, float w) {
 				//  view dir = 0,0,1
 				if (i < 3) {
 //					texCoord4.fp()[i] = 2.f * curNormal.fp()[i] *
-//						(curNormal % curCoord.vp()[0]) - curCoord.fp()[i];
+//						dot(curNormal, curCoord.vp()[0]) - curCoord.fp()[i];
 					texCoord4.fp()[i] = reflVec.fp()[i];
 				} else {
 					texCoord4.w = 1.f;

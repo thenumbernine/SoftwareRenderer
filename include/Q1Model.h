@@ -77,14 +77,10 @@ typedef struct {
 } q1_frame_t;
 
 
-class Q1Model {
-public:
-	Q1Model() { Reset(); }
-	~Q1Model() { Unload(); }
-private:
-	void Reset();
-public:
-	void Unload();
+struct Q1Model {
+	Q1Model(const char* filename);
+	~Q1Model();
+	
 	void LoadFromBuffer(const char *read_buffer);
 	void LoadFromFile(const char *filename);
 

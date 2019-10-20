@@ -5,12 +5,11 @@
 #include "sw.h"
 #include "swToolkit.h"
 
-#include "resource.h"
 #include "Q1ModelScene.h"
 #include "Common/Exception.h"
+//#include "ImGuiCommon/ImGuiCommon.h"
 
-#include <stdio.h>
-//#include <direct.h>
+//#include <stdio.h>
 #include <time.h>
 
 #include <vector>
@@ -293,14 +292,6 @@ void motion(int x, int y) {
 		View *v = vp->getView();
 
 		if (!(keyModifiers & (SWUT_ACTIVE_CTRL | SWUT_ACTIVE_ALT))) {
-			if (v->getOrtho()) {
-				//convert the change in screen space to change in modelview space
-				v->setPos(v->getPos() - (vp->getPixelPos(x, y) - vp->getPixelPos(mouseLastX, mouseLastY)));
-			} else {
-				//convert mouse movement vector to modelspace
-				v->setPos(v->getPos() + quatRotate(v->getAngle(), vec3f(0, -dx, -dy) * 0.1f));
-			}
-		} else if (!(keyModifiers & SWUT_ACTIVE_ALT)) {
 			//get our rotation axis by the perpendicular vector to our mouse movement in screen space
 			vec4f rotation = quatExp(vec3f(0, -dy * 0.01, dx * 0.01));
 			//convert 'rotation' from screenspace to modelview space (orient via view angle)
@@ -310,6 +301,14 @@ void motion(int x, int y) {
 			//calculate offset of rotation if we are selected on a shape
 			//rotate the position aroud - to keep the object in the same screenspace
 			v->setPos(quatRotate(rotation, v->getPos()));
+		} else if (!(keyModifiers & SWUT_ACTIVE_ALT)) {
+			if (v->getOrtho()) {
+				//convert the change in screen space to change in modelview space
+				v->setPos(v->getPos() - (vp->getPixelPos(x, y) - vp->getPixelPos(mouseLastX, mouseLastY)));
+			} else {
+				//convert mouse movement vector to modelspace
+				v->setPos(v->getPos() + quatRotate(v->getAngle(), vec3f(0, -dx, -dy) * 0.1f));
+			}
 		} else {
 			if (v->getOrtho()) {	//scale the width in ortho mode
 				v->setHalfWidth( v->getHalfWidth() * (float)exp(dy * 0.01f));
@@ -344,11 +343,11 @@ static std::map<std::string, std::pair<int Q1ModelScene::*, std::map<std::string
 		{
 			&Q1ModelScene::modelMode,
 			{
-				{"shambler", IDC_RADIO_MDL_Q},
-				{"cube", IDC_RADIO_MDL_CUBE},
-				{"cone", IDC_RADIO_MDL_CONE},
-				{"torus", IDC_RADIO_MDL_TORUS},
-				{"sphere", IDC_RADIO_MDL_SPHERE},
+				{"quake", Q1ModelScene::MODEL_QUAKE},
+				{"cube", Q1ModelScene::MODEL_CUBE},
+				{"cone", Q1ModelScene::MODEL_CONE},
+				{"torus", Q1ModelScene::MODEL_TORUS},
+				{"sphere", Q1ModelScene::MODEL_SPHERE},
 			}
 		}
 	},
@@ -357,11 +356,11 @@ static std::map<std::string, std::pair<int Q1ModelScene::*, std::map<std::string
 		{
 			&Q1ModelScene::renderMode,
 			{
-				{"none", IDC_RADIO_REN_NONE},
-				{"linear", IDC_RADIO_REN_LINEAR},
-				{"cylinder", IDC_RADIO_REN_CYL},
-				{"sphere", IDC_RADIO_REN_SPH},
-				{"cel", IDC_RADIO_REN_CEL},
+				{"none", Q1ModelScene::RENDER_NONE},
+				{"linear", Q1ModelScene::RENDER_LINEAR},
+				{"cylinder", Q1ModelScene::RENDER_CYL},
+				{"sphere", Q1ModelScene::RENDER_SPH},
+				{"cel", Q1ModelScene::RENDER_CEL},
 			}
 		}
 	},
@@ -370,12 +369,12 @@ static std::map<std::string, std::pair<int Q1ModelScene::*, std::map<std::string
 		{
 			&Q1ModelScene::textureMode,
 			{
-				{"default", IDC_RADIO_TEX_DEFAULT},
-				{"checker", IDC_RADIO_TEX_CHECKER},
-				{"contour", IDC_RADIO_TEX_CONTOUR},
-				{"cel", IDC_RADIO_TEX_CEL},
-				{"rgb", IDC_RADIO_TEX_RGB},
-				{"normalize", IDC_RADIO_TEX_NORMALIZE},
+				{"default", Q1ModelScene::TEX_DEFAULT},
+				{"checker", Q1ModelScene::TEX_CHECKER},
+				{"contour", Q1ModelScene::TEX_CONTOUR},
+				{"cel", Q1ModelScene::TEX_CEL},
+				{"rgb", Q1ModelScene::TEX_RGB},
+				{"normalize", Q1ModelScene::TEX_NORMALIZE},
 			}
 		}
 	},
@@ -384,8 +383,8 @@ static std::map<std::string, std::pair<int Q1ModelScene::*, std::map<std::string
 		{
 			&Q1ModelScene::borderMode[0],
 			{
-				{"repeat", IDC_RADIO_BOR_U_REP},
-				{"clamp", IDC_RADIO_BOR_U_CLMP},
+				{"repeat", BORDER_U_REP},
+				{"clamp", BORDER_U_CLMP},
 			},
 		}
 	},
@@ -394,8 +393,8 @@ static std::map<std::string, std::pair<int Q1ModelScene::*, std::map<std::string
 		{
 			&Q1ModelScene::borderMode[1],
 			{
-				{"repeat", IDC_RADIO_BOR_V_REP},
-				{"clamp", IDC_RADIO_BOR_V_CLMP},
+				{"repeat", BORDER_V_REP},
+				{"clamp", BORDER_V_CLMP},
 			},
 		}
 	},
@@ -404,8 +403,8 @@ static std::map<std::string, std::pair<int Q1ModelScene::*, std::map<std::string
 		{
 			&Q1ModelScene::borderMode[2],
 			{
-				{"repeat", IDC_RADIO_BOR_W_REP},
-				{"clamp", IDC_RADIO_BOR_W_CLMP},
+				{"repeat", BORDER_W_REP},
+				{"clamp", BORDER_W_CLMP},
 			},
 		}
 	},
@@ -414,8 +413,8 @@ static std::map<std::string, std::pair<int Q1ModelScene::*, std::map<std::string
 		{
 			&Q1ModelScene::filterMode,
 			{
-				{"nearest", IDC_RADIO_FIL_NEAR},
-				{"linear", IDC_RADIO_FIL_LIN},
+				{"nearest", Q1ModelScene::FILL_NEAR},
+				{"linear", Q1ModelScene::FILL_LIN},
 			}
 		}
 	},
@@ -426,14 +425,14 @@ void init_scene(const std::vector<std::string>& args) {
 
 	int n = (int)args.size();
 	for (int i = 1; i < n; ++i) {
-		const std::string& key = args[i];
+		const auto& key = args[i];
 		if (i < n-1) {
 			auto kit = sceneKVs.find(key);
 			if (kit != sceneKVs.end()) {
-				int Q1ModelScene::*vp = kit->second.first;
-				std::map<std::string, int>& m = kit->second.second;
+				auto vp = kit->second.first;
+				const auto& m = kit->second.second;
 
-				const std::string& value = args[++i];
+				const auto& value = args[++i];
 				auto vit = m.find(value);
 				if (vit == m.end()) {
 					std::cerr << "couldn't find value " << value << " for argument " << key << std::endl;
@@ -441,6 +440,20 @@ void init_scene(const std::vector<std::string>& args) {
 					(*scene).*vp = vit->second;
 					continue;
 				}
+			}
+		} else {
+			if (key == "-?" || key == "-h" || key == "-help" || key == "--help") {
+				std::cout << "command-line options:" << std::endl;
+				for (const auto& p : sceneKVs) {
+					std::cout << p.first << ": ";
+					const char* sep = "";
+					for (const auto& q : p.second.second) {
+						std::cout << sep << q.first;
+						sep = ", ";
+					}
+					std::cout << std::endl;
+				}
+				exit(1);
 			}
 		}
 		//} else if (key == "texmat") {
@@ -546,8 +559,8 @@ void init(const std::vector<std::string>& args) {
 
 	std::cout << std::endl;
 	std::cout << "instructions:" << std::endl;
-	std::cout << "left click to pan" << std::endl;
-	std::cout << "ctrl + left click to rotate" << std::endl;
+	std::cout << "left click to rotate" << std::endl;
+	std::cout << "ctrl + left click to pan" << std::endl;
 }
 
 ////////////////// shutdown

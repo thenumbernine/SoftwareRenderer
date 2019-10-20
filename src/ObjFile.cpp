@@ -6,6 +6,7 @@
 #include <time.h>
 
 #include "Common/Exception.h"
+#include "Common/File.h"
 
 #include "ObjFile.h"
 #include "Main.h"
@@ -15,23 +16,7 @@
 //dont use this flag unless its with homework #2 OBJ files
 //#define OFFSET_TO_CENTER
 
-void ObjFile::reset() {
-	bbox = box_t(vec3f(INFINITY,INFINITY,INFINITY),vec3f(-INFINITY,-INFINITY,-INFINITY));
-	memset(title, 0, sizeof(title));
-}
-
-void ObjFile::unload() {
-	vertex.clear();
-	normal.clear();
-	texCoord.clear();
-	tri.clear();
-	edge.clear();
-
-	//and reset
-	reset();
-}
-
-static char *nextEndLine(char *p, char *buffer) {
+static const char *nextEndLine(const char *p, const char *buffer) {
 	while(*p) {
 		if (*p == '\n' || *p == '\r') break;
 		p++;
@@ -39,7 +24,7 @@ static char *nextEndLine(char *p, char *buffer) {
 	return p;
 }
 
-static char *nextNewLine(char *p, char *buffer) {
+static const char *nextNewLine(const char *p, const char *buffer) {
 	while (*p) {
 		if (*p != '\n' && *p != '\r') break;
 		p++;
@@ -47,7 +32,7 @@ static char *nextNewLine(char *p, char *buffer) {
 	return p;
 }
 
-static char *nextSpace(char *p, char *buffer) {
+static const char *nextSpace(const char *p, const char *buffer) {
 	while (*p) {
 		if (*p == ' ' || *p == '\t') break;
 		p++;
@@ -55,7 +40,7 @@ static char *nextSpace(char *p, char *buffer) {
 	return p;
 }
 
-static char *nextNonSpace(char *p, char *buffer) {
+static const char *nextNonSpace(const char *p, const char *buffer) {
 	while (*p) {
 		if (*p != ' ' && *p != '\t') break;
 		p++;
@@ -63,7 +48,7 @@ static char *nextNonSpace(char *p, char *buffer) {
 	return p;
 }
 
-static char *nextSpaceOrEndLine(char *p, char *buffer) {
+static const char *nextSpaceOrEndLine(const char *p, const char *buffer) {
 	while (*p) {
 		if (*p == ' ' || *p == '\t' || *p == '\r' || *p == '\n') break;
 		p++;
@@ -71,29 +56,22 @@ static char *nextSpaceOrEndLine(char *p, char *buffer) {
 	return p;
 }
 
-void ObjFile::load(const char *filename) {
-	//in case there's already something in this object
-	unload();
-
-	FILE *file = fopen(filename, "r");
-	if (!file) throw Common::Exception() << "unable to open the file " << filename;
-
-	//todo - condition test this
-	fseek(file, 0, SEEK_END);
-	int size = ftell(file);
-	fseek(file, 0, SEEK_SET);
-
-	char *buffer = new char[size+1];
-
-	size = (int)fread(buffer, 1, size, file);
-	fclose(file);
-	buffer[size] = 0;	//force null term our buffer
+ObjFile::ObjFile(const char *filename) 
+	: bbox(
+		box_t(
+			vec3f(INFINITY,INFINITY,INFINITY),
+			vec3f(-INFINITY,-INFINITY,-INFINITY)
+		)
+	)
+{
+	std::string bufstr = Common::File::read(filename);
+	const char* buffer = bufstr.c_str();
 
 	//holds our current polygon indices
 	//used for breaking polys down into triangles
 	std::vector<triIndex_t> poly;
 
-	char *p = buffer;
+	const char *p = buffer;
 	while(*p){
 		if (*p == '\n' || *p == '\r') {
 			continue;
@@ -104,8 +82,8 @@ void ObjFile::load(const char *filename) {
 #define READ_VECTOR(v,dim)											\
 			p = nextSpace(p, buffer);								\
 			for (int i = 0; i < dim; i++) {							\
-				char *start = p = nextNonSpace(p, buffer);			\
-				char *end = p = nextSpaceOrEndLine(p, buffer);		\
+				const char *start = p = nextNonSpace(p, buffer);			\
+				const char *end = p = nextSpaceOrEndLine(p, buffer);		\
 				char token[32];										\
 				int size = 31;										\
 				int strSize = (int)(end - start);					\
@@ -135,8 +113,8 @@ void ObjFile::load(const char *filename) {
 			p = nextSpace(p, buffer);
 
 			for(;;) {
-				char *start = p = nextNonSpace(p, buffer);
-				char *end = p = nextSpaceOrEndLine(p, buffer);
+				const char *start = p = nextNonSpace(p, buffer);
+				const char *end = p = nextSpaceOrEndLine(p, buffer);
 
 				char token[32];
 				int size = 31;
@@ -209,12 +187,9 @@ void ObjFile::load(const char *filename) {
 			poly.clear();
 
 		} else {
-			std::cout << "got unhandled char " << *p << " " << (int)*p << " at index " << (p - buffer) << " of size " << size << std::endl;
-			break;
+			throw Common::Exception() << "got unhandled char " << *p << " " << (int)*p << " at index " << (p - buffer) << " of size " << bufstr.length();
 		}
 	}
-
-	delete[] buffer;
 
 //	if (!texCoord.size()) {
 //		flags &= ~bitflag(OBJFILE_FLAG_USE_TEXCOORDS);
@@ -363,7 +338,7 @@ void ObjFile::load(const char *filename) {
 			vertex[tri[i].p[0].v],
 			vertex[tri[i].p[1].v],
 			vertex[tri[i].p[2].v]);
-		tri[i].plane.w = -(*tri[i].plane.vp() % vertex[tri[i].p[0].v]);
+		tri[i].plane.w = -dot(*tri[i].plane.vp(), vertex[tri[i].p[0].v]);
 	}
 
 	//calc bounding radius
@@ -382,7 +357,7 @@ void ObjFile::load(const char *filename) {
 //		bbox.max.x, bbox.max.y,bbox.max.z);
 //	printf("loaded model %s\n", filename);
 
-	strncpy(title, filename, sizeof(title));
+	title = filename;
 }
 
 

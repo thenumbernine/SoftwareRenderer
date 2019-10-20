@@ -407,8 +407,8 @@ void swLookAt(float from[3], float at[3], float up[3]) {
 		from[0], from[1], from[2], 1);	//w column - we're good
 
 	//do a cross to get the X & Y axii correct
-	*m.x.vp() = (*m.y.vp()) * (*m.z.vp());		//x = y * z
-	*m.y.vp() = (*m.z.vp()) * (*m.x.vp());		//y = z * x
+	*m.x.vp() = cross(*m.y.vp(), *m.z.vp());		//x = y * z
+	*m.y.vp() = cross(*m.z.vp(), *m.x.vp());		//y = z * x
 
 	//normalize all
 	*m.x.vp() = vecUnit(*m.x.vp());

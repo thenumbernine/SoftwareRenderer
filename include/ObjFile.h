@@ -66,7 +66,7 @@ protected:
 	/**
 	 * identifier -- typically the filename
 	 */
-	char title[256];
+	std::string title;
 
 	/**
 	 * an array of the vertex coordinates
@@ -114,8 +114,7 @@ protected:
 
 public:
 
-	ObjFile() {reset();}
-	~ObjFile() {unload();}
+	ObjFile(const char* filename);
 
 	/**
 	 * Unallocate all buffers and clear the object
@@ -146,7 +145,7 @@ public:
 	/**
 	 * access to the title
 	 */
-	const char *getTitle() { return title; }
+	const std::string& getTitle() { return title; }
 
 	/**
 	 * triangle array access

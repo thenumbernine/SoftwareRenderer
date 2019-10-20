@@ -1,7 +1,3 @@
-#include <assert.h>
-#include <memory.h>
-#include <iostream>
-
 #include "sw.h"
 #include "swMain.h"
 #include "swRender.h"
@@ -10,6 +6,12 @@
 #include "swTexture.h"
 #include "vec.h"
 #include "Main.h"
+
+#include <assert.h>
+#include <memory.h>
+#include <iostream>
+#include <vector>
+
 
 typedef struct edge_s {
 	
@@ -43,8 +45,7 @@ static edge_t edgeBuffer[32];
 static int edgeBufferSize = 0;
 
 //the array of pointers mapping scanlines to entries in the edge buffer
-static edge_t **edgeTable = NULL;
-static int edgeTableSize = -1;
+static std::vector<edge_t *> edgeTable;
 
 //static edge_t aet[32];
 //static int aetSize = 0;
@@ -86,7 +87,7 @@ static inline void drawPolygons_buildEdgeTable(
 //std::cout << "edge ymin = " << edge_ymin << ", ymax = " << edge_ymax << std::endl;
 
 		//if the horizontal line we're targetting is below the lowest screen bar then forget it
-		if (edge_ymin >= edgeTableSize) continue;
+		if (edge_ymin >= (int)edgeTable.size()) continue;
 		//if it ends before the screen begins then forget it
 		if (edge_ymax < 0) continue;
 
@@ -168,13 +169,13 @@ static inline void drawPolygons_buildEdgeTable(
 		//insert it in at the edge table
 		if (!edgeTable[dest_y]) {
 			edgeTable[dest_y] = e;
-			e->prev = e->next = NULL;
+			e->prev = e->next = nullptr;
 		} else {
 			edge_t *src = edgeTable[dest_y];
 			if (src) src->prev = e;
 			e->next = src;
 			edgeTable[dest_y] = e;
-			e->prev = NULL;
+			e->prev = nullptr;
 		}
 	}
 }
@@ -386,15 +387,10 @@ void swDrawPolygons() {
 	int useDepthTest = swDepthBuffer && getSWStateBit(SW_BIT_DEPTH_TEST);
 	int useBlend = getSWStateBit(SW_BIT_BLEND);
 
-	if (edgeTableSize != swBufferHeight) {
-		edgeTableSize = swBufferHeight;
-		if (edgeTable) delete[] edgeTable;
-		edgeTable = (edgeTableSize > 0) ? new edge_t*[edgeTableSize] : NULL;
-		if (edgeTable) {
-			memset(edgeTable, 0, sizeof(edge_t *) * edgeTableSize);
-		}
+	if ((int)edgeTable.size() != swBufferHeight) {
+		edgeTable.resize(swBufferHeight);
+		for (auto& x : edgeTable) x = 0;
 	}
-	if (!edgeTable) return;
 
 	//do some clipping beforehand?
 	//normalize device coordinates
@@ -450,8 +446,8 @@ void swDrawPolygons() {
 	aetFirst = aetLast = NULL;
 
 	//ensure that we don't pass beneath the bottom of the screen
-	if (ymax >= edgeTableSize) {
-		ymax = edgeTableSize - 1;
+	if (ymax >= (int)edgeTable.size()) {
+		ymax = (int)edgeTable.size() - 1;
 	}
 //std::cout << "y = " << y << ", ymax = " << ymax << std::endl;
 	while (y <= ymax) {

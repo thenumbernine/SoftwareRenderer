@@ -3,7 +3,6 @@
 #include "sw.h"
 #include "Q1ModelScene.h"
 #include "Texture.h"
-#include "resource.h"
 #include "Common/Exception.h"
 
 #include <stdlib.h>
@@ -30,13 +29,13 @@ BOOL WINAPI Q1Model_DlgProc(
 			//set all initial buttons
 
 			int activeButtons[] = {
-				IDC_RADIO_MDL_CUBE,
-				IDC_RADIO_REN_NONE,
-				IDC_RADIO_TEX_NONE,
-				IDC_RADIO_BOR_U_REP,
-				IDC_RADIO_BOR_V_REP,
-				IDC_RADIO_BOR_W_REP,
-				IDC_RADIO_FIL_NEAR,
+				MODEL_CUBE,
+				RENDER_NONE,
+				TEX_NONE,
+				BORDER_U_REP,
+				BORDER_V_REP,
+				BORDER_W_REP,
+				FILL_NEAR,
 			};
 
 			for (int i = 0; i < numberof(activeButtons); i++) {
@@ -66,49 +65,49 @@ BOOL WINAPI Q1Model_DlgProc(
 			int wID = LOWORD(wParam);
 			HWND hwndCtl = (HWND) lParam;
 			switch (wID) {
-			case IDC_RADIO_MDL_Q:
-			case IDC_RADIO_MDL_CUBE:
-			case IDC_RADIO_MDL_CONE:
-			case IDC_RADIO_MDL_TORUS:
-			case IDC_RADIO_MDL_SPHERE:
+			case MODEL_QUAKE:
+			case MODEL_CUBE:
+			case MODEL_CONE:
+			case MODEL_TORUS:
+			case MODEL_SPHERE:
 				scene->setModelMode(wID);
 				break;
 
-			case IDC_RADIO_REN_NONE:
-			case IDC_RADIO_REN_LINEAR:
-			case IDC_RADIO_REN_CYL:
-			case IDC_RADIO_REN_SPH:
-			case IDC_RADIO_REN_CEL:
+			case RENDER_NONE:
+			case RENDER_LINEAR:
+			case RENDER_CYL:
+			case RENDER_SPH:
+			case RENDER_CEL:
 				scene->setRenderMode(wID);
 				break;
 
-			case IDC_RADIO_TEX_NONE:
-			case IDC_RADIO_TEX_DEFAULT:
-			case IDC_RADIO_TEX_CHECKER:
-			case IDC_RADIO_TEX_CONTOUR:
-			case IDC_RADIO_TEX_CEL:
-			case IDC_RADIO_TEX_RGB:
-			case IDC_RADIO_TEX_NORMALIZE:
+			case TEX_NONE:
+			case TEX_DEFAULT:
+			case TEX_CHECKER:
+			case TEX_CONTOUR:
+			case TEX_CEL:
+			case TEX_RGB:
+			case TEX_NORMALIZE:
 				scene->setTextureMode(wID);
 				break;
 
-			case IDC_RADIO_BOR_U_REP:
-			case IDC_RADIO_BOR_U_CLMP:
+			case BORDER_U_REP:
+			case BORDER_U_CLMP:
 				scene->setBorderMode(0, wID);
 				break;
 
-			case IDC_RADIO_BOR_V_REP:
-			case IDC_RADIO_BOR_V_CLMP:
+			case BORDER_V_REP:
+			case BORDER_V_CLMP:
 				scene->setBorderMode(1, wID);
 				break;
 
-			case IDC_RADIO_BOR_W_REP:
-			case IDC_RADIO_BOR_W_CLMP:
+			case BORDER_W_REP:
+			case BORDER_W_CLMP:
 				scene->setBorderMode(2, wID);
 				break;
 
-			case IDC_RADIO_FIL_NEAR:
-			case IDC_RADIO_FIL_LIN:
+			case FILL_NEAR:
+			case FILL_LIN:
 				scene->setFilterMode(wID);
 				break;
 
@@ -147,7 +146,6 @@ BOOL WINAPI Q1Model_DlgProc(
 		break;
 
 	case WM_CLOSE:
-		exit(0);	//until I find the appropriate one..
 		EndDialog(hwnd, 0);
 		controlWnd = NULL;
 		PostQuitMessage(0);
@@ -158,8 +156,6 @@ BOOL WINAPI Q1Model_DlgProc(
 	return false;
 }
 #endif
-
-// *************************** MD2SHADER RIP
 
 static unsigned int normalizeCubeMapTex = 0;
 
@@ -172,12 +168,12 @@ static void getCubeVector(int i, int cubesize, int x, int y, float *v) {
 	tc = t*2.0f - 1.0f;
 
 	switch (i) {
-	case 0:    v[0] = 1.0f;	v[1] = -tc;		v[2] = -sc;		break;
-	case 1:    v[0] = -1.0f;	v[1] = -tc;		v[2] = sc;		break;
-	case 2:    v[0] = sc;		v[1] = 1.0f;	v[2] = tc;		break;
-	case 3:    v[0] = sc;		v[1] = -1.0f;	v[2] = -tc;		break;
-	case 4:    v[0] = sc;		v[1] = -tc;		v[2] = 1.0f;	break;
-	case 5:    v[0] = -sc;	v[1] = -tc;		v[2] = -1.0f;	break;
+	case 0: v[0] = 1.0f; v[1] = -tc; v[2] = -sc; break;
+	case 1: v[0] = -1.0f; v[1] = -tc; v[2] = sc; break;
+	case 2: v[0] = sc; v[1] = 1.0f; v[2] = tc; break;
+	case 3: v[0] = sc; v[1] = -1.0f; v[2] = -tc; break;
+	case 4: v[0] = sc; v[1] = -tc; v[2] = 1.0f; break;
+	case 5: v[0] = -sc; v[1] = -tc; v[2] = -1.0f; break;
 	}
 
 	mag = 1.0f/(float)sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
@@ -222,22 +218,20 @@ void makeNormalizeVectorCubeMap(int size)
 	delete[] pixels;
 }
 
-// *************************** END MD2SHADER RIP
-
 Q1ModelScene::Q1ModelScene() :
-	modelMode(IDC_RADIO_MDL_CUBE),
-	renderMode(IDC_RADIO_REN_NONE),
-	textureMode(IDC_RADIO_TEX_NONE),
-	filterMode(IDC_RADIO_FIL_NEAR),
+	modelMode(MODEL_TORUS),
+	renderMode(RENDER_LINEAR),
+	textureMode(TEX_CHECKER),
+	filterMode(FILL_NEAR),
 	
 	rgbTex(),
 	celTex(),
 	contourTex(),
 	checkerTex()
 {
-	borderMode[0] = IDC_RADIO_BOR_U_REP;
-	borderMode[1] = IDC_RADIO_BOR_V_REP;
-	borderMode[2] = IDC_RADIO_BOR_W_REP;
+	borderMode[0] = BORDER_U_REP;
+	borderMode[1] = BORDER_V_REP;
+	borderMode[2] = BORDER_W_REP;
 
 	//rgbTex
 
@@ -330,28 +324,11 @@ Q1ModelScene::Q1ModelScene() :
 
 	//quakeMdl
 
-	quakeMdl = std::make_shared<Q1Model>();
-	quakeMdl->LoadFromFile("data/shambler.mdl");
-
-	//cubeMdl
-
-	cubeMdl = std::make_shared<ObjFile>();
-	cubeMdl->load("data/cube.obj");
-
-	//coneMdl
-
-	coneMdl = std::make_shared<ObjFile>();
-	coneMdl->load("data/cone.obj");
-
-	//torusMdl
-
-	torusMdl = std::make_shared<ObjFile>();
-	torusMdl->load("data/torus.obj");
-
-	//sphereMdl
-
-	sphereMdl = std::make_shared<ObjFile>();
-	sphereMdl->load("data/sphere.obj");
+	quakeMdl = std::make_shared<Q1Model>("data/shambler.mdl");
+	cubeMdl = std::make_shared<ObjFile>("data/cube.obj");
+	coneMdl = std::make_shared<ObjFile>("data/cone.obj");
+	torusMdl = std::make_shared<ObjFile>("data/torus.obj");
+	sphereMdl = std::make_shared<ObjFile>("data/sphere.obj");
 
 //	time = clock();
 //	frames = 0;
@@ -422,13 +399,13 @@ void Q1ModelScene::render(const Viewport *viewport, const View *view) {
 	unsigned int texIndex = (unsigned int)-1;
 
 	switch (textureMode) {
-	case IDC_RADIO_TEX_CHECKER:	texTarget = SW_TEXTURE_2D;	texIndex = checkerTex;			break;
-	case IDC_RADIO_TEX_CONTOUR:	texTarget = SW_TEXTURE_2D;	texIndex = contourTex;			break;
-	case IDC_RADIO_TEX_CEL:		texTarget = SW_TEXTURE_2D;	texIndex = celTex;				break;
-	case IDC_RADIO_TEX_RGB:		texTarget = SW_TEXTURE_3D;	texIndex = rgbTex;				break;
-	case IDC_RADIO_TEX_DEFAULT:	texTarget = SW_TEXTURE_2D;	texIndex = quakeMdl->skin[0];	break;
-	case IDC_RADIO_TEX_NORMALIZE: texTarget = SW_TEXTURE_CUBE_MAP; texIndex = normalizeCubeMapTex; break;
-//	case IDC_RADIO_TEX_NONE:default:							break;
+	case TEX_CHECKER:	texTarget = SW_TEXTURE_2D;	texIndex = checkerTex;			break;
+	case TEX_CONTOUR:	texTarget = SW_TEXTURE_2D;	texIndex = contourTex;			break;
+	case TEX_CEL:		texTarget = SW_TEXTURE_2D;	texIndex = celTex;				break;
+	case TEX_RGB:		texTarget = SW_TEXTURE_3D;	texIndex = rgbTex;				break;
+	case TEX_DEFAULT:	texTarget = SW_TEXTURE_2D;	texIndex = quakeMdl->skin[0];	break;
+	case TEX_NORMALIZE: texTarget = SW_TEXTURE_CUBE_MAP; texIndex = normalizeCubeMapTex; break;
+//	case TEX_NONE:default:							break;
 	}
 
 	if (texTarget != (unsigned int)-1 && texIndex != (unsigned int)-1) {
@@ -441,8 +418,8 @@ void Q1ModelScene::render(const Viewport *viewport, const View *view) {
 	unsigned int texBorderOp = (unsigned int)-1;
 
 	switch (borderMode[0]) {
-	case IDC_RADIO_BOR_U_REP:	texBorderOp = SW_REPEAT; break;
-	case IDC_RADIO_BOR_U_CLMP:	texBorderOp = SW_CLAMP; break;
+	case BORDER_U_REP:	texBorderOp = SW_REPEAT; break;
+	case BORDER_U_CLMP:	texBorderOp = SW_CLAMP; break;
 	}
 
 	if (texBorderOp != (unsigned int)-1) {
@@ -456,8 +433,8 @@ void Q1ModelScene::render(const Viewport *viewport, const View *view) {
 	texBorderOp = (unsigned int)-1;
 
 	switch (borderMode[1]) {
-	case IDC_RADIO_BOR_V_REP:	texBorderOp = SW_REPEAT; break;
-	case IDC_RADIO_BOR_V_CLMP:	texBorderOp = SW_CLAMP; break;
+	case BORDER_V_REP:	texBorderOp = SW_REPEAT; break;
+	case BORDER_V_CLMP:	texBorderOp = SW_CLAMP; break;
 	}
 
 	if (texBorderOp != (unsigned int)-1) {
@@ -471,8 +448,8 @@ void Q1ModelScene::render(const Viewport *viewport, const View *view) {
 	texBorderOp = (unsigned int)-1;
 
 	switch (borderMode[2]) {
-	case IDC_RADIO_BOR_W_REP:	texBorderOp = SW_REPEAT; break;
-	case IDC_RADIO_BOR_W_CLMP:	texBorderOp = SW_CLAMP; break;
+	case BORDER_W_REP:	texBorderOp = SW_REPEAT; break;
+	case BORDER_W_CLMP:	texBorderOp = SW_CLAMP; break;
 	}
 
 	if (texBorderOp != (unsigned int)-1) {
@@ -485,8 +462,8 @@ void Q1ModelScene::render(const Viewport *viewport, const View *view) {
 
 	unsigned int texFilter = (unsigned int)-1;
 	switch (filterMode) {
-	case IDC_RADIO_FIL_NEAR:	texFilter = SW_NEAREST; break;
-	case IDC_RADIO_FIL_LIN:		texFilter = SW_LINEAR; break;
+	case FILL_NEAR:	texFilter = SW_NEAREST; break;
+	case FILL_LIN:		texFilter = SW_LINEAR; break;
 	}
 
 	if (texFilter != (unsigned int)-1) {
@@ -505,13 +482,13 @@ void Q1ModelScene::render(const Viewport *viewport, const View *view) {
 	unsigned int texGenMode = (unsigned int)-1;
 
 	switch(renderMode) {
-	case IDC_RADIO_REN_LINEAR:	texGenMode = SW_OBJECT_LINEAR; break;
-	case IDC_RADIO_REN_CYL:		texGenMode = SW_OBJECT_CYLINDER; break;
-	case IDC_RADIO_REN_SPH:		texGenMode = SW_OBJECT_SPHERE; break;
-	case IDC_RADIO_REN_CEL:		texGenMode = SW_NORMAL_MAP; break;
+	case RENDER_LINEAR:		texGenMode = SW_OBJECT_LINEAR; break;
+	case RENDER_CYL:		texGenMode = SW_OBJECT_CYLINDER; break;
+	case RENDER_SPH:		texGenMode = SW_OBJECT_SPHERE; break;
+	case RENDER_CEL:		texGenMode = SW_NORMAL_MAP; break;
 		//todo - introduce SW_REFLECTION_MAP
 
-	case IDC_RADIO_REN_NONE:
+	case RENDER_NONE:
 	default:
 		swDisable(SW_TEXTURE_GEN_R);
 		swDisable(SW_TEXTURE_GEN_S);
@@ -529,36 +506,26 @@ void Q1ModelScene::render(const Viewport *viewport, const View *view) {
 	//model mode
 
 	switch (modelMode) {
-	case IDC_RADIO_MDL_Q:
-
+	case MODEL_QUAKE:
 		swTranslatef(0,0,-20);
 		quakeMdl->DisplayInterpolate((int)frame, (int)frame + 1, frame - (int)frame);
 		break;
-
-	case IDC_RADIO_MDL_CUBE:
-
+	case MODEL_CUBE:
 		swScalef(40,40,40);
 		cubeMdl->render();
 		break;
-
-	case IDC_RADIO_MDL_CONE:
-
+	case MODEL_CONE:
 		swScalef(40,40,40);
 		coneMdl->render();
 		break;
-
-	case IDC_RADIO_MDL_TORUS:
-
+	case MODEL_TORUS:
 		swScalef(40,40,40);
 		torusMdl->render();
 		break;
-
-	case IDC_RADIO_MDL_SPHERE:
-
+	case MODEL_SPHERE:
 		swScalef(40,40,40);
 		sphereMdl->render();
 		break;
-
 	}
 
 	//shutdown render mode

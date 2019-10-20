@@ -3,6 +3,9 @@
 #include <math.h>
 #include <ostream>
 
+#include <Common/Meta.h>
+#include <Common/crtp_cast.h>
+
 //vector math
 
 //// constants
@@ -31,160 +34,271 @@
 #define NULL 0
 #endif
 
-//// 2D vectors
 
-#define VEC2ELEM(i)	(i).x,(i).y
-
-class vec2f {
-public:
-	float x, y;
-
-	vec2f() : x(0), y(0) {}
-
-	vec2f(float x_, float y_) : x(x_), y(y_) {}
-
-	float *fp() {
-		return &x;
-	}
-
-	const float *fp() const {
-		return &x;
+template<typename T>
+struct assign {
+	template<int i>
+	struct vec_assign {
+		static bool exec(T& v, const T& o) {
+			v.template get<i>() = o.template get<i>();
+			return false;
+		}
+	};
+	
+	inline T& operator=(const T& o) {
+		Common::ForLoop<0, T::dim, vec_assign>::exec(crtp_cast<T>(*this), o);
 	}
 };
 
 //addition
 
-inline vec2f operator+(const vec2f &a, const vec2f &b) {
-	return vec2f(
-		a.x + b.x,
-		a.y + b.y);
-}
+template<typename T>
+struct add_op {
+	template<int i>
+	struct vec_add {
+		static bool exec(T& c, const T& a, const T& b) {
+			c.template get<i>() = a.template get<i>() + b.template get<i>();
+			return false;
+		}
+	};
+	
+	inline T operator+(const T& b) const {
+		T t;
+		Common::ForLoop<0, T::dim, vec_add>::exec(t, crtp_cast<T>(*this), b);
+		return t;
+	}
 
-inline vec2f operator+=(vec2f &a, const vec2f &b) {
-	return (a = a + b);
-}
+	inline T& operator+=(const T& b) {
+		return (crtp_cast<T>(*this) = crtp_cast<T>(*this) + b);
+	}
+};
 
 //subtraction
 
-inline vec2f operator-(const vec2f &a, const vec2f &b) {
-	return vec2f(
-		a.x - b.x,
-		a.y - b.y);
-}
+template<typename T>
+struct sub_op {
+	template<int i>
+	struct vec_sub {
+		static bool exec(T& c, const T& a, const T& b) {
+			c.template get<i>() = a.template get<i>() - b.template get<i>();
+			return false;
+		}
+	};
+	
+	inline T operator-(const T& b) const {
+		T t;
+		Common::ForLoop<0, T::dim, vec_sub>::exec(t, crtp_cast<T>(*this), b);
+		return t;
+	}
 
-inline vec2f operator-=(vec2f &a, const vec2f &b) {
-	return (a = a - b);
-}
+	inline T& operator-=(const T& b) {
+		return (crtp_cast<T>(*this) = crtp_cast<T>(*this) - b);
+	}
+};
 
-inline bool operator==(const vec2f &a, const vec2f &b) {
-	return (a.x == b.x && a.y == b.y);
-}
+//multiplication
 
-//scaling
+template<typename T, typename S>
+struct mul_op {
+	template<int i>
+	struct vec_mul {
+		static bool exec(T& c, const T& a, const S& b) {
+			c.template get<i>() = a.template get<i>() * b;
+			return false;
+		}
+	};
+	
+	inline T operator*(const S& b) const {
+		T t;
+		Common::ForLoop<0, T::dim, vec_mul>::exec(t, crtp_cast<T>(*this), b);
+		return t;
+	}
 
-inline vec2f operator*(const vec2f &a, float b) {
-	return vec2f(
-		a.x * b,
-		a.y * b);
-}
+	inline T& operator*=(const S& b) {
+		return (crtp_cast<T>(*this) = crtp_cast<T>(*this) * b);
+	}
+};
 
-inline vec2f operator*=(vec2f &a, float b) {
-	return (a = a * b);
-}
+//division
 
-inline vec2f operator/(const vec2f &a, float b) {
-	return a * (1.f / b);
-}
+template<typename T, typename S>
+struct div_op {
+	template<int i>
+	struct vec_div {
+		static bool exec(T& c, const T& a, const S& b) {
+			c.template get<i>() = a.template get<i>() / b;
+			return false;
+		}
+	};
+	
+	inline T operator/(const S& b) const {
+		T t;
+		Common::ForLoop<0, T::dim, vec_div>::exec(t, crtp_cast<T>(*this), b);
+		return t;
+	}
 
-inline vec2f operator/=(vec2f &a, float b) {
-	return (a = a / b);
-}
+	inline T& operator/=(const S& b) {
+		return (crtp_cast<T>(*this) = crtp_cast<T>(*this) / b);
+	}
+};
 
-//making MSVC5 able to use this with vectors.
-inline bool operator<(const vec2f &a, const vec2f &b) {
-	return a.x < b.x;
-}
+// ==
 
-inline std::ostream& operator<<(std::ostream& o, const vec2f& v) {
-	return o << "{" << v.x << ", " << v.y << "}";
+template<typename T>
+struct eq_op {
+	template<int i>
+	struct vec_eq {
+		static bool exec(bool& result, const T& a, const T& b) {
+			result = result && (a.template get<i>() == b.template get<i>());
+			return !result;
+		}
+	};
+	
+	inline bool operator==(const T& v) const {
+		bool result = true;
+		Common::ForLoop<0, T::dim, vec_eq>::exec(result, crtp_cast<T>(*this), v);
+		return result;
+	}
+	
+	inline bool operator!=(const T& v) const {
+		return !operator==(v);
+	}
+};
+
+//ostream
+
+template<typename T>
+struct ostream_op {
+	template<int i>
+	struct vec_ostream {
+		static bool exec(std::ostream& o, const T& v) {
+			if (i != 0) o << ", ";
+			o << v.template get<i>();
+			return false;
+		}
+	};
+
+	void output(std::ostream& o) {
+		o << "{";
+		Common::ForLoop<0, T::dim, vec_ostream>::exec(o, crtp_cast<T>(*this));
+		o << "}";
+	}
+};
+
+//// 2D vectors
+
+#define VEC2ELEM(i)	(i).x,(i).y
+	
+
+template<typename T>
+struct vec2 : public 
+	assign<vec2<T>>,
+	add_op<vec2<T>>,
+	sub_op<vec2<T>>,
+	mul_op<vec2<T>,T>,
+	div_op<vec2<T>,T>,
+	eq_op<vec2<T>>,
+	ostream_op<vec2<T>>
+{
+	using type = T;
+	
+	enum { dim = 2 };
+	template<int i> inline T& get();
+	template<int i> inline const T& get() const;
+
+	T x, y;
+
+	vec2() : x(0), y(0) {}
+	vec2(T x_, T y_) : x(x_), y(y_) {}
+
+	T *fp() { return &x; }
+	const T *fp() const { return &x; }
+};
+
+using vec2f = vec2<float>;
+
+//hmm... how to make this flexible
+template<> template<> inline float& vec2<float>::get<0>() { return x; };
+template<> template<> inline float& vec2<float>::get<1>() { return y; };
+
+template<> template<> inline const float& vec2<float>::get<0>() const { return x; };
+template<> template<> inline const float& vec2<float>::get<1>() const { return y; };
+
+
+//ostream
+
+template<typename T>
+inline std::ostream& operator<<(std::ostream& o, const vec2<T>& v) {
+	v.output(o);
+	return o;
 }
 
 //// 3D vectors
 
 #define VEC3ELEM(i)	(i).x,(i).y,(i).z
 
-/**
- * This is the class used to represent 3D vectors
- */
-class vec3f {
-public:
+template<typename T>
+struct vec3 : public
+	assign<vec3<T>>,
+	add_op<vec3<T>>,
+	sub_op<vec3<T>>,
+	mul_op<vec3<T>,T>,
+	div_op<vec3<T>,T>,
+	eq_op<vec3<T>>,
+	ostream_op<vec3<T>>
+{
+	using type = T;
 
-	float x, y, z;
+	enum { dim = 3 };
+	template<int i> inline T& get();
+	template<int i> inline const T& get() const;
 
-	vec3f() : x(0), y(0), z(0) {}
+	T x, y, z;
 
-	vec3f(float x_, float y_, float z_) : x(x_), y(y_), z(z_) {}
+	vec3() : x(0), y(0), z(0) {}
+	vec3(T x_, T y_, T z_) : x(x_), y(y_), z(z_) {}
 
-	float *fp() {
-		return &x;
-	}
-
-	const float *fp() const {
-		return &x;
-	}
+	float *fp() { return &x; }
+	const float *fp() const { return &x; }
 };
 
+using vec3f = vec3<float>;
+
+//hmm... how to make this flexible
+template<> template<> inline float& vec3<float>::get<0>() { return x; };
+template<> template<> inline float& vec3<float>::get<1>() { return y; };
+template<> template<> inline float& vec3<float>::get<2>() { return z; };
+
+template<> template<> inline const float& vec3<float>::get<0>() const { return x; };
+template<> template<> inline const float& vec3<float>::get<1>() const { return y; };
+template<> template<> inline const float& vec3<float>::get<2>() const { return z; };
+
 //unary
-inline vec3f operator-(const vec3f &a) {
-	return vec3f(-a.x, -a.y, -a.z);
+
+#if 1
+template<typename T>
+inline T operator-(const vec3<T>& v) {
+	return vec3<T>(-v.x, -v.y, -v.z);
 }
+#else
+template<typename T>
+struct un_op {
+	template<int i>
+	struct vec_un {
+		static bool exec(T& c, const T& a) {
+			c.template get<i>() = -a.template get<i>();
+			return false;
+		}
+	};
+};
 
-//addition
-
-inline vec3f operator+(const vec3f &a, const vec3f &b) {
-	return vec3f(
-		a.x + b.x,
-		a.y + b.y,
-		a.z + b.z);
+template<typename T>
+inline T operator-(const vec3<T>& v) {
+	T t;
+	Common::ForLoop<0, T::dim, un_op<vec3<T>>::vec_un>::exec(t, v);
+	return t;
 }
-
-inline vec3f operator+=(vec3f &a, const vec3f &b) {
-	return (a = a + b);
-}
-
-//subtraction
-
-inline vec3f operator-(const vec3f &a, const vec3f &b) {
-	return vec3f(
-		a.x - b.x,
-		a.y - b.y,
-		a.z - b.z);
-}
-
-inline vec3f operator-=(vec3f &a, const vec3f &b) {
-	return (a = a - b);
-}
-
-//scaling
-
-inline vec3f operator*(const vec3f &a, float b) {
-	return vec3f(
-		a.x * b,
-		a.y * b,
-		a.z * b);
-}
-
-inline vec3f operator*=(vec3f &a, float b) {
-	return (a = a * b);
-}
-
-inline vec3f operator/(const vec3f &a, float b) {
-	return a * (1.f / b);
-}
-
-inline vec3f operator/=(vec3f &a, float b) {
-	return (a = a / b);
-}
+#endif
 
 //linear interpolation
 
@@ -199,20 +313,23 @@ inline vec3f vec3lerp(const vec3f &src, const vec3f &dst, float coeff) {
 //tensor operations
 
 	//dot product
-inline float operator%(const vec3f &a, const vec3f &b) {
+template<typename T>
+inline T dot(const vec3<T> &a, const vec3<T> &b) {
 	return a.x * b.x + a.y * b.y + a.z * b.z;
 }
 
 	//cross product
-inline vec3f operator*(const vec3f &a, const vec3f &b) {
+inline vec3f cross(const vec3f &a, const vec3f &b) {
 	return vec3f(
 		a.y * b.z - a.z * b.y,
 		a.z * b.x - a.x * b.z,
 		a.x * b.y - a.y * b.x);
 }
 
-inline std::ostream& operator<<(std::ostream& o, const vec3f& v) {
-	return o << "{" << v.x << ", " << v.y << ", " << v.z << "}";
+template<typename T>
+inline std::ostream& operator<<(std::ostream& o, const vec3<T>& v) {
+	v.output(o);
+	return o;
 }
 
 //magnitude
@@ -220,11 +337,11 @@ inline std::ostream& operator<<(std::ostream& o, const vec3f& v) {
 	//L-2
 
 inline float vecLengthSq(const vec3f &v) {
-	return v%v;
+	return dot(v,v);
 }
 
 inline float vecLength(const vec3f &v) {
-	return (float)sqrt(v%v);
+	return (float)sqrt(dot(v,v));
 }
 
 	//L-Infinite
@@ -253,23 +370,14 @@ inline vec3f vecUnit(const vec3f &v) {
 	}
 }
 
-inline bool operator==(const vec3f &a, const vec3f &b) {
-	return (a.x == b.x && a.y == b.y && a.z == b.z);
-}
-
-//making MSVC5 able to use this with std::vector
-inline bool operator<(const vec3f &a, const vec3f &b) {
-	return a.x < b.x;
-}
-
 // useful functions
 
 inline vec3f vecPlaneNormal(const vec3f &a, const vec3f &b, const vec3f &c) {
-	return (b - a) * (c - b);
+	return cross(b - a, c - b);
 }
 
 inline vec3f vecUnitNormal(const vec3f &a, const vec3f &b, const vec3f &c) {
-	return vecUnit((b - a) * (c - b));
+	return vecUnit(cross(b - a, c - b));
 }
 
 typedef int32_t fixed_t;
@@ -284,54 +392,37 @@ typedef int32_t fixed_t;
  * This is the class used to represent 3D vectors in fixed-point-precision
  * 32 bits, 16 whole number and 16 fractional
  */
-class vec3fixed {
-public:
+struct vec3fixed : public
+	assign<vec3fixed>,
+	add_op<vec3fixed>,
+	sub_op<vec3fixed>
+{
+	using type = fixed_t;
 
-	fixed_t x, y, z;
+	enum { dim = 3 };
+	template<int i> inline type& get();
+	template<int i> inline const type& get() const;
 
+	type x, y, z;
+	
 	vec3fixed() : x(0), y(0), z(0) {}
+	vec3fixed(type x_, type y_, type z_) : x(x_), y(y_), z(z_) {}
 
-	vec3fixed(fixed_t x_, fixed_t y_, fixed_t z_) : x(x_), y(y_), z(z_) {}
-
-	fixed_t *ip() {
-		return &x;
-	}
-
-	const fixed_t *ip() const {
-		return &x;
-	}
+	type *ip() { return &x; }
+	const type *ip() const { return &x; }
 };
 
-//addition
+//hmm... how to make this flexible
+template<> inline fixed_t& vec3fixed::get<0>() { return x; };
+template<> inline fixed_t& vec3fixed::get<1>() { return y; };
+template<> inline fixed_t& vec3fixed::get<2>() { return z; };
 
-inline vec3fixed operator+(const vec3fixed &a, const vec3fixed &b) {
-	return vec3fixed(
-		a.x + b.x,
-		a.y + b.y,
-		a.z + b.z);
-}
+template<> inline const fixed_t& vec3fixed::get<0>() const { return x; };
+template<> inline const fixed_t& vec3fixed::get<1>() const { return y; };
+template<> inline const fixed_t& vec3fixed::get<2>() const { return z; };
 
-inline vec3fixed operator+=(vec3fixed &a, const vec3fixed &b) {
-	return (a = a + b);
-}
-
-//subtraction
-
-inline vec3fixed operator-(const vec3fixed &a, const vec3fixed &b) {
-	return vec3fixed(
-		a.x - b.x,
-		a.y - b.y,
-		a.z - b.z);
-}
 
 //scaling
-
-inline vec3fixed operator*(const vec3fixed &a, float b) {
-	return vec3fixed(
-		(fixed_t)((float)a.x * b),
-		(fixed_t)((float)a.y * b),
-		(fixed_t)((float)a.z * b));
-}
 
 //64-bit true multiplication (no bits left behind!)
 inline fixed_t fixedMul(fixed_t x, fixed_t y) {
@@ -365,6 +456,11 @@ inline vec3fixed fixedMul(vec3fixed a, fixed_t b) {
 		fixedMul(a.z, b));
 }
 
+inline vec3fixed operator*(const vec3fixed &a, float b) {
+	return fixedMul(a, (fixed_t)(b * FIXED_FRACTION_BITS));
+}
+
+
 inline std::ostream& operator<<(std::ostream& o, const vec3fixed& v) {
 	return o << "{" << v.x << ", " << v.y << ", " << v.z << "}";
 }
@@ -377,32 +473,48 @@ inline std::ostream& operator<<(std::ostream& o, const vec3fixed& v) {
 /**
  * This class holds a quaternion, in <x,y,z,w> format.
  */
-class vec4f {
-public:
-	float x,y,z,w;
+template<typename T>
+struct vec4 : public 
+	assign<vec4<T>>,
+	add_op<vec4<T>>,
+	sub_op<vec4<T>>,
+	mul_op<vec4<T>,T>,
+	div_op<vec4<T>,T>,
+	eq_op<vec4<T>>,
+	ostream_op<vec4<T>>
+{
+	using type = T;
 
-	vec4f() : x(0), y(0), z(0), w(1) {}
+	enum { dim = 4 };
+	template<int i> inline T& get();
+	template<int i> inline const T& get() const;
+	
+	T x,y,z,w;
 
-	vec4f(const vec3f &v, float w_) : x(v.x), y(v.y), z(v.z), w(w_) {}
+	vec4() : x(0), y(0), z(0), w(1) {}
+	vec4(const vec3<T> &v, T w_) : x(v.x), y(v.y), z(v.z), w(w_) {}
+	vec4(T x_, T y_, T z_, T w_) : x(x_), y(y_), z(z_), w(w_) {}
 
-	vec4f(float x_, float y_, float z_, float w_) : x(x_), y(y_), z(z_), w(w_) {}
+	T *fp() { return &x; }
+	const T *fp() const { return &x; }
 
-	float *fp() {
-		return &x;
-	}
-
-	const float *fp() const {
-		return &x;
-	}
-
-	vec3f *vp() {
-		return (vec3f *)&x;
-	}
-
-	const vec3f *vp() const {
-		return (vec3f *)&x;
-	}
+	vec3<T> *vp() { return (vec3<T> *)&x; }
+	const vec3<T> *vp() const { return (vec3<T> *)&x; }
 };
+
+using vec4f = vec4<float>;
+
+//hmm... how to make this flexible
+template<> template<> inline float& vec4<float>::get<0>() { return x; };
+template<> template<> inline float& vec4<float>::get<1>() { return y; };
+template<> template<> inline float& vec4<float>::get<2>() { return z; };
+template<> template<> inline float& vec4<float>::get<3>() { return w; };
+
+template<> template<> inline const float& vec4<float>::get<0>() const { return x; };
+template<> template<> inline const float& vec4<float>::get<1>() const { return y; };
+template<> template<> inline const float& vec4<float>::get<2>() const { return z; };
+template<> template<> inline const float& vec4<float>::get<3>() const { return w; };
+
 
 /** 
  * This quaternion represents the identity quaternion.
@@ -410,33 +522,11 @@ public:
  */
 const static vec4f quat4fIdentity(0,0,0,1);
 
-//addition
-
-inline vec4f operator+(const vec4f &a, const vec4f &b) {
-	return vec4f(
-		a.x + b.x,
-		a.y + b.y,
-		a.z + b.z,
-		a.w + b.w);
-}
-
-inline vec4f operator+=(vec4f &a, const vec4f &b) {
-	return (a = a + b);
-}
-
-inline vec4f operator-(const vec4f &a, const vec4f &b) {
-	return vec4f(
-		a.x - b.x,
-		a.y - b.y,
-		a.z - b.z,
-		a.w - b.w);
-}
-
-
 //multiplication
 
-inline vec4f operator*(const vec4f &q, const vec4f &r) {
-	float a,b,c,d,e,f,g,h;
+template<typename T>
+inline vec4<T> operator*(const vec4<T> &q, const vec4<T> &r) {
+	T a,b,c,d,e,f,g,h;
 
 	a = (q.w + q.x) * (r.w + r.x);
 	b = (q.z - q.y) * (r.y - r.z);
@@ -447,37 +537,10 @@ inline vec4f operator*(const vec4f &q, const vec4f &r) {
 	g = (q.w + q.y) * (r.w - r.z);
 	h = (q.w - q.y) * (r.w + r.z);
 
-	return vec4f(	a - 0.5f * ( e + f + g + h),
-					-c + 0.5f * ( e - f + g - h),
-					-d + 0.5f * ( e - f - g + h),
-					b + 0.5f * (-e - f + g + h));
-}
-
-inline vec4f operator*(const vec4f &a, float b) {
-	return vec4f(
-		a.x * b,
-		a.y * b,
-		a.z * b,
-		a.w * b);
-}
-
-inline vec4f operator*=(vec4f &a, const vec4f &b) {
-	return (a = a * b);
-}
-
-//scaling
-
-inline vec4f operator/(const vec4f &a, float b) {
-	return a * (1.f / b);
-}
-
-inline vec4f operator*=(vec4f &a, float b) {
-	return (a = a * b);
-}
-
-//boolean
-inline bool operator!=(const vec4f &a, const vec4f &b) {
-	return (a.x != b.x || a.y != b.y || a.z != b.z || a.w != b.w);
+	return vec4<T>(	a - .5 * ( e + f + g + h),
+					-c + .5 * ( e - f + g - h),
+					-d + .5 * ( e - f - g + h),
+					b + .5 * (-e - f + g + h));
 }
 
 //conjugation
@@ -488,14 +551,14 @@ inline vec4f quatConj(const vec4f &q) {
 
 //dot product
 
-inline float operator%(const vec4f &a, const vec4f &b) {
+inline float dot(const vec4f &a, const vec4f &b) {
 	return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
 }
 
 //magnitude
 
 inline float quatLength(const vec4f &q) {
-	return (float)sqrt(q%q);
+	return (float)sqrt(dot(q, q));
 }
 
 //normalization
@@ -930,7 +993,7 @@ public:
 	 * calc the 'dist' variable based upon the current 'normal' and the point provided
 	 */
 	void calcDist(const vec3f &v) {
-		*negDist() = -(*vp() % v);
+		*negDist() = -dot(*vp(), v);
 	}
 
 };
@@ -960,7 +1023,7 @@ inline plane_t planeBuild(const vec3f &a, const vec3f &b, const vec3f &c) {
  * a negative distance implies the point is on the back of the plane
  */
 inline float planePointDist(const plane_t &plane, const vec3f &v) {
-	return (*plane.normal() % v) + *plane.negDist();
+	return dot(*plane.normal(), v) + *plane.negDist();
 }
 
 /**
@@ -994,7 +1057,7 @@ inline vec3f planeProjectPoint(const plane_t &plane, const vec3f &v) {
  * compensates for plane.normal's magnitude
  */
 inline vec3f planeProjectPointNormalized(const plane_t &plane, const vec3f &v) {
-	return v + (*plane.normal()) * (-((*plane.negDist()) + ((*plane.normal()) % v) / ((*plane.normal()) % (*plane.normal()))));
+	return v + (*plane.normal()) * (-((*plane.negDist()) + dot(*plane.normal(), v) / dot(*plane.normal(), *plane.normal())));
 }
 
 //// lines
