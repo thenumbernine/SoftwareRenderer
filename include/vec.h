@@ -218,11 +218,11 @@ struct vec2 : public
 using vec2f = vec2<float>;
 
 //hmm... how to make this flexible
-template<> template<> inline float& vec2<float>::get<0>() { return x; };
-template<> template<> inline float& vec2<float>::get<1>() { return y; };
+template<typename T> template<> inline T& vec2<T>::get<0>() { return x; };
+template<typename T> template<> inline T& vec2<T>::get<1>() { return y; };
 
-template<> template<> inline const float& vec2<float>::get<0>() const { return x; };
-template<> template<> inline const float& vec2<float>::get<1>() const { return y; };
+template<typename T> template<> inline const T& vec2<T>::get<0>() const { return x; };
+template<typename T> template<> inline const T& vec2<T>::get<1>() const { return y; };
 
 
 //ostream
