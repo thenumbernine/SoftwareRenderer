@@ -11,7 +11,7 @@ void ObjInst::reset() {
 	model = NULL;
 
 	//rendering
-	mat.diff = vec4f(1,1,1,1);
+	mat.diff = quatf(1,1,1,1);
  
 	//transformations
 	basis.t = vec3f(0,0,0);

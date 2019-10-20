@@ -100,7 +100,7 @@ protected:
 	/**
 	 * Bounding box containing all the vertices of this object
 	 */
-	box_t bbox;
+	box3f bbox;
 
 	/**
 	 * Bounding radius containing all the vertices of this object
@@ -134,7 +134,7 @@ public:
 	/**
 	 * constant access to the bounding box
 	 */
-	const box_t &getBBox() const { return bbox; }
+	const box3f &getBBox() const { return bbox; }
 
 	/**
 	 * returns the radius of the smallest sphere centered at the origin 

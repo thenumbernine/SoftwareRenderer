@@ -27,7 +27,7 @@ int swErrorCode = SW_NO_ERROR;
 /**
  * the current vertex color
  */
-static vec4f curColor(1,1,1,1);
+static quatf curColor(1,1,1,1);
 
 /** 
  * the current surface normal
@@ -117,11 +117,11 @@ void swNormal3f(float x, float y, float z) {
 }
 
 void swColor3f(float r, float g, float b) {
-	curColor = vec4f(r,g,b,1);
+	curColor = quatf(r,g,b,1);
 }
 
 void swColor4f(float r, float g, float b, float a) {
-	curColor = vec4f(r,g,b,a);
+	curColor = quatf(r,g,b,a);
 }
 
 void swTexCoord2f(float x, float y) {
@@ -144,11 +144,11 @@ void swVertex4f(float x, float y, float z, float w) {
 	assert(&texMat);
 
 //coordinate
-	vec4f curCoord(x,y,z,w);
+	quatf curCoord(x,y,z,w);
 //std::cout << "world " << curCoord << std::endl;	
-	vec4f mdlvCoord = mdlvMat * curCoord;
+	quatf mdlvCoord = mdlvMat * curCoord;
 //std::cout << "modelview " << mdlvCoord << std::endl;	
-	vec4f projCoord = projMat * mdlvCoord;
+	quatf projCoord = projMat * mdlvCoord;
 //std::cout << "projected " << projCoord << std::endl;	
 
 //color
@@ -169,7 +169,7 @@ void swVertex4f(float x, float y, float z, float w) {
 
 //texcoord
 	//transform texcoords by current texture matrix
-	vec4f texCoord4(VEC3ELEM(curTexCoord),1);
+	quatf texCoord4(VEC3ELEM(curTexCoord),1);
 
 	//texgen
 	{

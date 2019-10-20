@@ -17,7 +17,7 @@ void View::reset() {
 	zfar = 3000.f;
 
 	basis.t = vec3f(0,0,0);
-	basis.r = vec4f(0,0,0,1);
+	basis.r = quatf(0,0,0,1);
 }
 
 void View::render(const Viewport *vp) {
@@ -134,12 +134,12 @@ void View::translateInverse() const {
 }
 
 void View::rotateInverse() const {
-	vec4f q = quatToAngleAxis(basis.r);
+	quatf q = quatToAngleAxis(basis.r);
 	swRotatef(q.w, -q.x, -q.y, -q.z);
 }
 
 void View::rotate() const {
-	vec4f q = quatToAngleAxis(basis.r);
+	quatf q = quatToAngleAxis(basis.r);
 	swRotatef(q.w, q.x, q.y, q.z);
 }
 

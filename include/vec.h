@@ -178,7 +178,7 @@ struct ostream_op {
 		}
 	};
 
-	void output(std::ostream& o) {
+	void output(std::ostream& o) const {
 		o << "{";
 		Common::ForLoop<0, T::dim, vec_ostream>::exec(o, crtp_cast<T>(*this));
 		o << "}";
@@ -200,7 +200,7 @@ struct vec2 : public
 	eq_op<vec2<T>>,
 	ostream_op<vec2<T>>
 {
-	using type = T;
+	using scalar = T;
 	
 	enum { dim = 2 };
 	template<int i> inline T& get();
@@ -247,7 +247,7 @@ struct vec3 : public
 	eq_op<vec3<T>>,
 	ostream_op<vec3<T>>
 {
-	using type = T;
+	using scalar = T;
 
 	enum { dim = 3 };
 	template<int i> inline T& get();
@@ -258,8 +258,8 @@ struct vec3 : public
 	vec3() : x(0), y(0), z(0) {}
 	vec3(T x_, T y_, T z_) : x(x_), y(y_), z(z_) {}
 
-	float *fp() { return &x; }
-	const float *fp() const { return &x; }
+	T *fp() { return &x; }
+	const T *fp() const { return &x; }
 };
 
 using vec3f = vec3<float>;
@@ -302,9 +302,10 @@ inline T operator-(const vec3<T>& v) {
 
 //linear interpolation
 
-inline vec3f vec3lerp(const vec3f &src, const vec3f &dst, float coeff) {
-	float one_minus = 1.f - coeff;
-	return vec3f(
+template<typename T>
+inline vec3<T> vec3lerp(const vec3<T> &src, const vec3<T> &dst, typename vec3<T>::scalar coeff) {
+	typename vec3<T>::scalar one_minus = 1 - coeff;
+	return vec3<T>(
 		src.x * one_minus + dst.x * coeff,
 		src.y * one_minus + dst.y * coeff,
 		src.z * one_minus + dst.z * coeff);
@@ -319,8 +320,9 @@ inline T dot(const vec3<T> &a, const vec3<T> &b) {
 }
 
 	//cross product
-inline vec3f cross(const vec3f &a, const vec3f &b) {
-	return vec3f(
+template<typename T>
+inline vec3<T> cross(const vec3<T> &a, const vec3<T> &b) {
+	return vec3<T>(
 		a.y * b.z - a.z * b.y,
 		a.z * b.x - a.x * b.z,
 		a.x * b.y - a.y * b.x);
@@ -336,21 +338,24 @@ inline std::ostream& operator<<(std::ostream& o, const vec3<T>& v) {
 
 	//L-2
 
-inline float vecLengthSq(const vec3f &v) {
+template<typename T>
+inline T vecLengthSq(const vec3<T> &v) {
 	return dot(v,v);
 }
 
-inline float vecLength(const vec3f &v) {
-	return (float)sqrt(dot(v,v));
+template<typename T>
+inline T vecLength(const vec3<T> &v) {
+	return (T)sqrt(dot(v,v));
 }
 
 	//L-Infinite
 
-inline float vecLengthLInf(const vec3f &v) {
+template<typename T>
+inline T vecLengthLInf(const vec3<T> &v) {
 	//start with |x|
-	float a = v.x < 0 ? -v.x : v.x;
+	T a = v.x < 0 ? -v.x : v.x;
 	//compare to |y|
-	float b = v.y < 0 ? -v.y : v.y;
+	T b = v.y < 0 ? -v.y : v.y;
 	if (a < b) a = b;
 	//compare to |z|
 	b = v.z < 0 ? -v.z : v.z;
@@ -361,8 +366,9 @@ inline float vecLengthLInf(const vec3f &v) {
 
 //normalization
 
-inline vec3f vecUnit(const vec3f &v) {
-	float len = vecLength(v);
+template<typename T>
+inline vec3<T> vecUnit(const vec3<T> &v) {
+	T len = vecLength(v);
 	if (!len) {
 		return v;
 	} else {
@@ -372,11 +378,13 @@ inline vec3f vecUnit(const vec3f &v) {
 
 // useful functions
 
-inline vec3f vecPlaneNormal(const vec3f &a, const vec3f &b, const vec3f &c) {
+template<typename T>
+inline vec3<T> vecPlaneNormal(const vec3<T> &a, const vec3<T> &b, const vec3<T> &c) {
 	return cross(b - a, c - b);
 }
 
-inline vec3f vecUnitNormal(const vec3f &a, const vec3f &b, const vec3f &c) {
+template<typename T>
+inline vec3<T> vecUnitNormal(const vec3<T> &a, const vec3<T> &b, const vec3<T> &c) {
 	return vecUnit(cross(b - a, c - b));
 }
 
@@ -397,19 +405,19 @@ struct vec3fixed : public
 	add_op<vec3fixed>,
 	sub_op<vec3fixed>
 {
-	using type = fixed_t;
+	using scalar = fixed_t;
 
 	enum { dim = 3 };
-	template<int i> inline type& get();
-	template<int i> inline const type& get() const;
+	template<int i> inline scalar& get();
+	template<int i> inline const scalar& get() const;
 
-	type x, y, z;
+	scalar x, y, z;
 	
 	vec3fixed() : x(0), y(0), z(0) {}
-	vec3fixed(type x_, type y_, type z_) : x(x_), y(y_), z(z_) {}
+	vec3fixed(scalar x_, scalar y_, scalar z_) : x(x_), y(y_), z(z_) {}
 
-	type *ip() { return &x; }
-	const type *ip() const { return &x; }
+	scalar *ip() { return &x; }
+	const scalar *ip() const { return &x; }
 };
 
 //hmm... how to make this flexible
@@ -474,16 +482,16 @@ inline std::ostream& operator<<(std::ostream& o, const vec3fixed& v) {
  * This class holds a quaternion, in <x,y,z,w> format.
  */
 template<typename T>
-struct vec4 : public 
-	assign<vec4<T>>,
-	add_op<vec4<T>>,
-	sub_op<vec4<T>>,
-	mul_op<vec4<T>,T>,
-	div_op<vec4<T>,T>,
-	eq_op<vec4<T>>,
-	ostream_op<vec4<T>>
+struct quat : public 
+	assign<quat<T>>,
+	add_op<quat<T>>,
+	sub_op<quat<T>>,
+	mul_op<quat<T>,T>,
+	div_op<quat<T>,T>,
+	eq_op<quat<T>>,
+	ostream_op<quat<T>>
 {
-	using type = T;
+	using scalar = T;
 
 	enum { dim = 4 };
 	template<int i> inline T& get();
@@ -491,9 +499,9 @@ struct vec4 : public
 	
 	T x,y,z,w;
 
-	vec4() : x(0), y(0), z(0), w(1) {}
-	vec4(const vec3<T> &v, T w_) : x(v.x), y(v.y), z(v.z), w(w_) {}
-	vec4(T x_, T y_, T z_, T w_) : x(x_), y(y_), z(z_), w(w_) {}
+	quat() : x(0), y(0), z(0), w(1) {}
+	quat(const vec3<T> &v, T w_) : x(v.x), y(v.y), z(v.z), w(w_) {}
+	quat(T x_, T y_, T z_, T w_) : x(x_), y(y_), z(z_), w(w_) {}
 
 	T *fp() { return &x; }
 	const T *fp() const { return &x; }
@@ -502,30 +510,30 @@ struct vec4 : public
 	const vec3<T> *vp() const { return (vec3<T> *)&x; }
 };
 
-using vec4f = vec4<float>;
+using quatf = quat<float>;
 
 //hmm... how to make this flexible
-template<> template<> inline float& vec4<float>::get<0>() { return x; };
-template<> template<> inline float& vec4<float>::get<1>() { return y; };
-template<> template<> inline float& vec4<float>::get<2>() { return z; };
-template<> template<> inline float& vec4<float>::get<3>() { return w; };
+template<> template<> inline float& quat<float>::get<0>() { return x; };
+template<> template<> inline float& quat<float>::get<1>() { return y; };
+template<> template<> inline float& quat<float>::get<2>() { return z; };
+template<> template<> inline float& quat<float>::get<3>() { return w; };
 
-template<> template<> inline const float& vec4<float>::get<0>() const { return x; };
-template<> template<> inline const float& vec4<float>::get<1>() const { return y; };
-template<> template<> inline const float& vec4<float>::get<2>() const { return z; };
-template<> template<> inline const float& vec4<float>::get<3>() const { return w; };
+template<> template<> inline const float& quat<float>::get<0>() const { return x; };
+template<> template<> inline const float& quat<float>::get<1>() const { return y; };
+template<> template<> inline const float& quat<float>::get<2>() const { return z; };
+template<> template<> inline const float& quat<float>::get<3>() const { return w; };
 
 
 /** 
  * This quaternion represents the identity quaternion.
  * TODO - put this in one spot and 'extern' it - to save that tiny bit of memory
  */
-const static vec4f quat4fIdentity(0,0,0,1);
+const static quatf quat4fIdentity(0,0,0,1);
 
 //multiplication
 
 template<typename T>
-inline vec4<T> operator*(const vec4<T> &q, const vec4<T> &r) {
+inline quat<T> operator*(const quat<T> &q, const quat<T> &r) {
 	T a,b,c,d,e,f,g,h;
 
 	a = (q.w + q.x) * (r.w + r.x);
@@ -537,7 +545,7 @@ inline vec4<T> operator*(const vec4<T> &q, const vec4<T> &r) {
 	g = (q.w + q.y) * (r.w - r.z);
 	h = (q.w - q.y) * (r.w + r.z);
 
-	return vec4<T>(	a - .5 * ( e + f + g + h),
+	return quat<T>(	a - .5 * ( e + f + g + h),
 					-c + .5 * ( e - f + g - h),
 					-d + .5 * ( e - f - g + h),
 					b + .5 * (-e - f + g + h));
@@ -545,31 +553,35 @@ inline vec4<T> operator*(const vec4<T> &q, const vec4<T> &r) {
 
 //conjugation
 
-inline vec4f quatConj(const vec4f &q) {
-	return vec4f(q.x, q.y, q.z, -q.w);
+inline quatf quatConj(const quatf &q) {
+	return quatf(q.x, q.y, q.z, -q.w);
 }
 
 //dot product
 
-inline float dot(const vec4f &a, const vec4f &b) {
+template<typename T>
+inline T dot(const quat<T> &a, const quat<T> &b) {
 	return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
 }
 
 //magnitude
 
-inline float quatLength(const vec4f &q) {
-	return (float)sqrt(dot(q, q));
+template<typename T>
+inline T quatLength(const quat<T> &q) {
+	return (T)sqrt(dot(q, q));
 }
 
 //normalization
 
-inline vec4f quatUnit(const vec4f &q) {
+template<typename T>
+inline quat<T> quatUnit(const quat<T> &q) {
 	return q / quatLength(q);
 }
 
-inline vec4f vec4lerp(const vec4f &src, const vec4f &dst, float coeff) {
-	float one_minus = 1.f - coeff;
-	return vec4f(
+template<typename T>
+inline quat<T> lerp(const quat<T> &src, const quat<T> &dst, T coeff) {
+	T one_minus = 1 - coeff;
+	return quat<T>(
 		src.x * one_minus + dst.x * coeff,
 		src.y * one_minus + dst.y * coeff,
 		src.z * one_minus + dst.z * coeff,
@@ -581,22 +593,23 @@ inline vec4f vec4lerp(const vec4f &src, const vec4f &dst, float coeff) {
  * This method converts an object from a quaternion to angle-axis form.
  * The resultant quaternion 'w' component holds the quaternion angle, in degrees.
  */
-inline vec4f quatToAngleAxis(const vec4f &q) {
-	float cosom = q.w;
-	if (cosom < -1.f) cosom = -1.f;
-	else if (cosom > 1.f) cosom = 1.f;
+template<typename T>
+inline quat<T> quatToAngleAxis(const quat<T> &q) {
+	T cosom = q.w;
+	if (cosom < -1) cosom = -1;
+	else if (cosom > 1) cosom = 1;
 
-	float halfangle = (float)acos(cosom);
-	float scale = (float)sin(halfangle);
+	T halfangle = (T)acos(cosom);
+	T scale = (T)sin(halfangle);
 
 	//TODO - check epsilon
 	if (!scale) {
-		return vec4f(0,0,1,0);
+		return quat<T>(0,0,1,0);
 	}
 
-	scale = (float)1.f / scale;
+	scale = (T)1 / scale;
 
-	return vec4f(q.x * scale, q.y * scale, q.z * scale, halfangle * 360.f / (float)M_PI);
+	return quat<T>(q.x * scale, q.y * scale, q.z * scale, halfangle * 360.f / (T)M_PI);
 }
 
 /**
@@ -604,15 +617,16 @@ inline vec4f quatToAngleAxis(const vec4f &q) {
  * It assumes the 'w' component of the incoming quaternion is the angle, measured in degrees.
  * It also assumes the <x,y,z> components of the incoming quaternion form a unit vector.
  */
-inline vec4f angleAxisToQuat(const vec4f &q) {
-	float halfangle = q.w * (float)M_PI / 360.f;
-	float scale = (float)sin(halfangle);
+template<typename T>
+inline quat<T> angleAxisToQuat(const quat<T> &q) {
+	T halfangle = q.w * (T)M_PI / 360.f;
+	T scale = (T)sin(halfangle);
 
-	return vec4f(
+	return quatf(
 		q.x * scale,
 		q.y * scale,
 		q.z * scale,
-		(float)cos(halfangle));
+		(T)cos(halfangle));
 }
 
 /**
@@ -620,17 +634,18 @@ inline vec4f angleAxisToQuat(const vec4f &q) {
  * Equivalent to 'angleAxisToQuat(quat4fNew(v.x, v.y, v.z, vecLength(v) / M_PI * 360.f))'
  * for some vec3f 'v'.
  */
-inline vec4f quatExp(const vec3f &a) {
-	float length = vecLength(a);
+template<typename T>
+inline quat<T> quatExp(const vec3<T> &a) {
+	T length = vecLength(a);
 	if (!length) {
-		return quat4fIdentity;
+		return quat<T>(0,0,0,1);
 	}
 
 	//compensate for numerical inaccuracies at sin(x)/x for x->0
-	float sinth = 1.f;
-	if (length > 0.00001f || length < -0.00001f) sinth = (float)sin(length) / length;
+	T sinth = 1.f;
+	if (length > 0.00001f || length < -0.00001f) sinth = (T)sin(length) / length;
 	
-	return vec4f(a * sinth, (float)cos(length));
+	return quat<T>(a * sinth, (T)cos(length));
 }
 
 /**
@@ -638,13 +653,14 @@ inline vec4f quatExp(const vec3f &a) {
  * This is equivalent to the operation 'q * quat4fNew(v.x,v.y,v.z,0) * quatConj(q)'
  * This is mathematically correct only when 'q' is a unit quaternion.
  */
-inline vec3f quatRotate(const vec4f &q, const vec3f &v) {
-	float w2x2 = (q.w + q.x) * (q.w - q.x);
-	float w2y2 = (q.w + q.y) * (q.w - q.y);
-	float x2z2 = (q.x + q.z) * (q.x - q.z);
-	float y2z2 = (q.y + q.z) * (q.y - q.z);
+template<typename T>
+inline vec3<T> quatRotate(const quat<T> &q, const vec3<T> &v) {
+	T w2x2 = (q.w + q.x) * (q.w - q.x);
+	T w2y2 = (q.w + q.y) * (q.w - q.y);
+	T x2z2 = (q.x + q.z) * (q.x - q.z);
+	T y2z2 = (q.y + q.z) * (q.y - q.z);
 
-	return vec3f(
+	return vec3<T>(
 		v.x * (w2y2 + x2z2) + 2.f*(v.y * (q.x * q.y - q.w * q.z) + v.z * (q.x * q.z + q.w * q.y)),
 		v.y * (w2x2 + y2z2) + 2.f*(v.z * (q.y * q.z - q.w * q.x) + v.x * (q.x * q.y + q.w * q.z)),
 		v.z * (w2y2 - x2z2) + 2.f*(v.x * (q.x * q.z - q.w * q.y) + v.y * (q.y * q.z + q.w * q.x)));
@@ -654,37 +670,42 @@ inline vec3f quatRotate(const vec4f &q, const vec3f &v) {
  * Returns the X-axis of the basis formed by converting 'q' from a quaternion to a matrix
  * and returning the first column vector components.
  */
-inline vec3f quatXAxis(const vec4f &q) {
-	return vec3f(
-		1.f - 2.f * (q.y * q.y + q.z * q.z),
-		2.f * (q.x * q.y + q.z * q.w),
-		2.f * (q.x * q.z - q.w * q.y));
+template<typename T>
+inline vec3<T> quatXAxis(const quat<T> &q) {
+	return vec3<T>(
+		1 - 2 * (q.y * q.y + q.z * q.z),
+		2 * (q.x * q.y + q.z * q.w),
+		2 * (q.x * q.z - q.w * q.y));
 }
 
 /**
  * Returns the Y-axis of the basis formed by converting 'q' from a quaternion to a matrix
  * and returning the first column vector components.
  */
-inline vec3f quatYAxis(const vec4f &q) {
-	return vec3f(
-		2.f * (q.x * q.y - q.w * q.z),
-		1.f - 2.f * (q.x * q.x + q.z * q.z),
-		2.f * (q.y * q.z + q.w * q.x));
+template<typename T>
+inline vec3<T> quatYAxis(const quat<T> &q) {
+	return vec3<T>(
+		2 * (q.x * q.y - q.w * q.z),
+		1 - 2 * (q.x * q.x + q.z * q.z),
+		2 * (q.y * q.z + q.w * q.x));
 }
 
 /**
- * Returns the Y-axis of the basis formed by converting 'q' from a quaternion to a matrix
+ * Returns the Z-axis of the basis formed by converting 'q' from a quaternion to a matrix
  * and returning the first column vector components.
  */
-inline vec3f quatZAxis(const vec4f &q) {
-	return vec3f(
-		2.f * (q.x * q.z + q.w * q.y),
-		2.f * (q.y * q.z - q.w * q.x),
-		1.f - 2.f * (q.x * q.x + q.y * q.y));
+template<typename T>
+inline vec3<T> quatZAxis(const quat<T> &q) {
+	return vec3<T>(
+		2 * (q.x * q.z + q.w * q.y),
+		2 * (q.y * q.z - q.w * q.x),
+		1 - 2 * (q.x * q.x + q.y * q.y));
 }
 
-inline std::ostream& operator<<(std::ostream& o, const vec4f& v) {
-	return o << "{" << v.x << ", " << v.y << ", " << v.z << ", " << v.w << "}";
+template<typename T>
+inline std::ostream& operator<<(std::ostream& o, const quat<T>& v) {
+	v.output(o);
+	return o;
 }
 
 //// 4x4 matrices
@@ -707,7 +728,7 @@ public:
 	 * therefore we have fast access to the axis vectors
 	 */
 //	float m[4][4];
-	vec4f x,y,z,w;
+	quatf x,y,z,w;
 
 	/**
 	 * constructor: identity matrix
@@ -769,8 +790,8 @@ public:
 
 };
 
-inline vec4f operator*(const mat44f &a, const vec4f &b) {
-	return vec4f(
+inline quatf operator*(const mat44f &a, const quatf &b) {
+	return quatf(
 		a.x.x * b.x + a.y.x * b.y + a.z.x * b.z + a.w.x * b.w,
 		a.x.y * b.x + a.y.y * b.y + a.z.y * b.z + a.w.y * b.w,
 		a.x.z * b.x + a.y.z * b.y + a.z.z * b.z + a.w.z * b.w,
@@ -852,7 +873,7 @@ inline std::ostream& operator<<(std::ostream& o, const mat44f& m) {
  */
 class basis_t {
 public:
-	vec4f r;
+	quatf r;
 	vec3f t;
 
 	/**
@@ -863,7 +884,7 @@ public:
 	/**
 	 * constructs a basis with the specified orientation and translation
 	 */
-	basis_t(const vec4f &r_, const vec3f &t_) : r(r_), t(t_) {}
+	basis_t(const quatf &r_, const vec3f &t_) : r(r_), t(t_) {}
 
 	/**
 	* returns a * b
@@ -883,7 +904,7 @@ public:
 //orthogonal basis, uniform scale, with transform components
 class basisu_t {
 public:
-	vec4f r;
+	quatf r;
 	float s;
 	vec3f t;
 
@@ -895,7 +916,7 @@ public:
 	/**
 	 * constructs a basis with the specified orientation scale and translation
 	 */
-	basisu_t(const vec4f &r_, float s_, const vec3f &t_) : r(r_), s(s_), t(t_) {}
+	basisu_t(const quatf &r_, float s_, const vec3f &t_) : r(r_), s(s_), t(t_) {}
 
 	/**
 	* returns a * b
@@ -915,7 +936,7 @@ public:
 //orthogonal basis, non-uniform scale, with transform components
 class basisn_t {
 public:
-	vec4f r;
+	quatf r;
 	vec3f s;
 	vec3f t;
 
@@ -927,7 +948,7 @@ public:
 	/**
 	 * constructs a basis with the specified orientation scale and translation
 	 */
-	basisn_t(const vec4f &r_, const vec3f &s_, const vec3f &t_) : r(r_), s(s_), t(t_) {}
+	basisn_t(const quatf &r_, const vec3f &s_, const vec3f &t_) : r(r_), s(s_), t(t_) {}
 
 	/**
 	* returns a * b
@@ -963,50 +984,54 @@ public:
  * where D represents the negative distance from the origin divided by |A,B,C|
  * but - to shortcut calculations, we will store -D as 'dist'
  */
-class plane_t : public vec4f {
-public:
+template<typename T>
+struct plane : public quat<T> {
+	using super = quat<T>;
+	using scalar = typename super::scalar;
 
 	/**
 	 * constructs an empty plane with normal <0,0,0> and distance from origin 0
 	 */
-	plane_t() : vec4f(0,0,0,0) {}
+	plane() : super(0,0,0,0) {}
 
 	/**
 	 * constructs a plane from the specified normal at zero distance
 	 */
-	plane_t(const vec3f &normal) : vec4f(normal, 0) {}
+	plane(const vec3<T> &normal) : super(normal, 0) {}
 
 	/**
 	 * constructs a plane from the specified normal at the specified distance
 	 */
-	plane_t(const vec3f &normal, float dist) {
-		*vp() = normal;
-		w = -dist;
+	plane(const vec3<T> &normal, T dist) {
+		*super::vp() = normal;
+		super::w = -dist;
 	}
 
-	vec3f *normal() { return vp(); }
-	const vec3f *normal() const { return vp(); }
-	float *negDist() { return &w; }
-	const float *negDist() const { return &w; }
+	vec3<T> *normal() { return super::vp(); }
+	const vec3<T> *normal() const { return super::vp(); }
+	T *negDist() { return &this->super::w; }
+	const T *negDist() const { return &this->super::w; }
 
 	/**
 	 * calc the 'dist' variable based upon the current 'normal' and the point provided
 	 */
-	void calcDist(const vec3f &v) {
-		*negDist() = -dot(*vp(), v);
+	void calcDist(const vec3<T> &v) {
+		*negDist() = -dot(*super::vp(), v);
 	}
-
 };
 
 /**
  * builds a plane from the three points
  * creates the normal assuming a right-handed system from points a->b->c
  */
-inline plane_t planeBuildUnit(const vec3f &a, const vec3f &b, const vec3f &c) {
-	plane_t plane(vecUnitNormal(a,b,c));
+template<typename T>
+inline plane<T> planeBuildUnit(const vec3<T> &a, const vec3<T> &b, const vec3<T> &c) {
+	plane<T> plane(vecUnitNormal(a,b,c));
 	plane.calcDist(a);
 	return plane;
 }
+
+using plane_t = plane<float>;
 
 /**
  * same as above but with non-normalized normal
@@ -1062,24 +1087,25 @@ inline vec3f planeProjectPointNormalized(const plane_t &plane, const vec3f &v) {
 
 //// lines
 
-class line_t {
-public:
-	vec3f pos;
-	vec3f dir;
+template<typename T>
+struct line {
+	T pos, dir;
 
 	/**
 	 * line starting at the origin in the dir of the x axis
 	 */
-	line_t() : dir(vec3f(1,0,0)) {}
+	line() : dir(T(1,0,0)) {}
 
-	line_t(const vec3f &pos_, const vec3f &dir_) : pos(pos_), dir(dir_) {}
+	line(const T &pos_, const T &dir_) : pos(pos_), dir(dir_) {}
 };
+
+using line3f = line<vec3f>;
 
 /**
  * returns the coefficient 'c' for which
  * line.pos + line.dir * c lies on the specified plane
  */
-inline float linePlaneIntersectFraction(const line_t &line, const plane_t &plane) {
+inline float linePlaneIntersectFraction(const line3f &line, const plane_t &plane) {
 	float src_dist = planePointDist(plane, line.pos);
 	float dest_dist = planePointDist(plane, line.pos + line.dir);
 	return src_dist / (src_dist - dest_dist);
@@ -1088,43 +1114,52 @@ inline float linePlaneIntersectFraction(const line_t &line, const plane_t &plane
 /**
  * returns the point at which the line and plane intersect
  */
-inline vec3f linePlaneIntersect(const line_t &line, const plane_t &plane) {
+inline vec3f linePlaneIntersect(const line3f &line, const plane_t &plane) {
 	return line.pos + line.dir * linePlaneIntersectFraction(line, plane);
 }
 
 //// bounding boxes
 
-class box_t {
+template<typename T>
+class box {
 public:
-	vec3f min, max;
+	T min, max;
 
 	/**
 	 * default create a box around <0,0,0>
 	 */
-	box_t() {}
+	box() {}
 
-	box_t(const vec3f &min_, const vec3f &max_) : min(min_), max(max_) {}
+	box(const T &min_, const T &max_) : min(min_), max(max_) {}
+
+	template<int i>
+	struct stretch_for {
+		static bool exec(box<T>& b, const T& min, const T& max) {
+			if (min.template get<i>() < b.min.template get<i>()) b.min.template get<i>() = min.template get<i>();
+			if (max.template get<i>() > b.max.template get<i>()) b.max.template get<i>() = max.template get<i>();
+			return false;
+		}
+	};
 
 	/**
 	 * stretches the volume of 'this' to include the two specified points
 	 */
-	void stretch(const vec3f &min, const vec3f &max) {
-		for (int i = 0; i < 3; i++) {
-			if (min.fp()[i] < this->min.fp()[i]) this->min.fp()[i] = min.fp()[i];
-			if (max.fp()[i] > this->max.fp()[i]) this->max.fp()[i] = max.fp()[i];
-		}
+	void stretch(const T &min, const T &max) {
+		Common::ForLoop<0, T::dim, stretch_for>::exec(*this, min, max);
 	}
 
 	/**
 	 * stretches the volume of 'this' to include the specified point
 	 */
-	void stretch(const vec3f &v) {
-		stretch(v,v);
+	void stretch(const T &v) {
+		stretch(v, v);
 	}
 
 	/**
 	 * vec3f pointer to the box structure
 	 * THIS IS DEPENDANT UPON CLASS VARIABLE ORDER
 	 */
-	const vec3f *vp() const { return &min; }
+	const T *vp() const { return &min; }
 };
+
+using box3f = box<vec3f>;

@@ -12,20 +12,20 @@
 class Material {
 public:
 	Material() {}
-	Material(const vec4f &amb, const vec4f &diff, const vec4f &spec, float shine) {
+	Material(const quatf &amb, const quatf &diff, const quatf &spec, float shine) {
 		set(amb,diff,spec,shine);
 	}
 
-	void set(const vec4f &amb, const vec4f &diff, const vec4f &spec, float shine) {
+	void set(const quatf &amb, const quatf &diff, const quatf &spec, float shine) {
 		this->amb = amb;
 		this->diff = diff;
 		this->spec = spec;
 		this->shine = shine;	
 	}	
 
-	vec4f	amb;
-	vec4f	diff;
-	vec4f	spec;
+	quatf	amb;
+	quatf	diff;
+	quatf	spec;
 
 	/**
 	 * "love is in the water,

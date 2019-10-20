@@ -317,7 +317,7 @@ void swWindow_Destroy() {
 
 #include <math.h>
 
-static vec4f swClearColorValue(0,0,0,0);
+static quatf swClearColorValue(0,0,0,0);
 
 static float swClearDepthValue = 0.f;
 
@@ -341,7 +341,7 @@ void swClear (int bits) {
 }
 
 void swClearColor(float r, float g, float b, float a) {
-	swClearColorValue = vec4f(r,g,b,a);
+	swClearColorValue = quatf(r,g,b,a);
 }
 
 void swClearDepth(double depth) {

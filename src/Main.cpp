@@ -293,7 +293,7 @@ void motion(int x, int y) {
 
 		if (!(keyModifiers & (SWUT_ACTIVE_CTRL | SWUT_ACTIVE_ALT))) {
 			//get our rotation axis by the perpendicular vector to our mouse movement in screen space
-			vec4f rotation = quatExp(vec3f(0, -dy * 0.01, dx * 0.01));
+			quatf rotation = quatExp(vec3f(0, -dy * 0.01, dx * 0.01));
 			//convert 'rotation' from screenspace to modelview space (orient via view angle)
 			rotation = v->getAngle() * rotation * quatConj(v->getAngle());
 			//apply 'rotation' to view, and normalize
@@ -489,7 +489,7 @@ void init_views() {
 		_VIEW_ZNEAR,
 		_VIEW_ZFAR,
 		vec3f(0,0,_VIEW_INIT_DIST),
-		angleAxisToQuat(vec4f(0,1,0,90)) * angleAxisToQuat(vec4f(1,0,0,-90)));
+		angleAxisToQuat(quatf(0,1,0,90)) * angleAxisToQuat(quatf(1,0,0,-90)));
 
 	views[VIEW_XZ].set(
 		scene,
@@ -500,7 +500,7 @@ void init_views() {
 		_VIEW_ZNEAR,
 		_VIEW_ZFAR,
 		vec3f(0,-_VIEW_INIT_DIST,0),
-		angleAxisToQuat(vec4f(0,0,1,90)));
+		angleAxisToQuat(quatf(0,0,1,90)));
 
 	views[VIEW_YZ].set(
 		scene,
@@ -522,7 +522,7 @@ void init_views() {
 		_VIEW_ZNEAR,
 		_VIEW_ZFAR,
 //		vec3f(-3.289347f, -1.090798f, -14.594609f),
-//		vec4f(-0.461630f, 0.474959f, -0.405921f, -0.629714f));
+//		quatf(-0.461630f, 0.474959f, -0.405921f, -0.629714f));
 		vec3f(-_VIEW_INIT_DIST,0,0),
 		quat4fIdentity);
 }

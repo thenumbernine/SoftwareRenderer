@@ -156,7 +156,7 @@ public:
 		float	znear,
 		float	zfar,
 		const	vec3f	&pos,
-		const	vec4f &angle)
+		const	quatf &angle)
 	{
 		this->scene = scene;
 		this->ortho = ortho;
@@ -184,8 +184,8 @@ public:
 	/**
 	 * Set or get the angle quaternion
 	 */
-	const vec4f &getAngle() const {		return basis.r;	}
-	void setAngle(const vec4f &q) {			basis.r = q;	}
+	const quatf &getAngle() const {		return basis.r;	}
+	void setAngle(const quatf &q) {			basis.r = q;	}
 
 	/**
 	 * Set or get the whole basis

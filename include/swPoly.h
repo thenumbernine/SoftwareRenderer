@@ -37,7 +37,7 @@ inline std::ostream& operator<<(std::ostream& o, const swFragment& f) {
  */
 class Vertex {
 public:
-	vec4f		coord;		//vertex position  - x,y,z,w homogeneous coordinate system
+	quatf		coord;		//vertex position  - x,y,z,w homogeneous coordinate system
 
 	swFragment	fr;
 //	vec3fixed	color;		//color of the vertex
@@ -47,7 +47,7 @@ public:
 
 	// quick variable initialization
 	Vertex(
-		const vec4f &coord,
+		const quatf &coord,
 		const vec3fixed &color,
 		const vec3fixed &texcoord
 #ifdef USE_FRAGMENT_NORMALS

@@ -58,7 +58,7 @@ static const char *nextSpaceOrEndLine(const char *p, const char *buffer) {
 
 ObjFile::ObjFile(const char *filename) 
 	: bbox(
-		box_t(
+		box3f(
 			vec3f(INFINITY,INFINITY,INFINITY),
 			vec3f(-INFINITY,-INFINITY,-INFINITY)
 		)

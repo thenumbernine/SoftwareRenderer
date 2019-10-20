@@ -691,8 +691,8 @@ void swDrawLine(Vertex v0, Vertex v1) {
 
 	if (!dy) return;
 
-	vec4f color = vmin->fr.color;
-	vec4f dc = (vmax->fr.color - vmin->fr.color) / (float)(ymax - ymin + 1);
+	quatf color = vmin->fr.color;
+	quatf dc = (vmax->fr.color - vmin->fr.color) / (float)(ymax - ymin + 1);
 
 	for (int y = ymin; y <= ymax; y++) {
 
