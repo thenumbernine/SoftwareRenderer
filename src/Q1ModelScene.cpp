@@ -324,7 +324,12 @@ Q1ModelScene::Q1ModelScene() :
 
 	//quakeMdl
 
-	quakeMdl = std::make_shared<Q1Model>("data/shambler.mdl");
+	try {
+		quakeMdl = std::make_shared<Q1Model>("data/shambler.mdl");
+	} catch (std::exception& e) {
+		std::cout << e.what() << std::endl;
+	}
+	
 	cubeMdl = std::make_shared<ObjFile>("data/cube.obj");
 	coneMdl = std::make_shared<ObjFile>("data/cone.obj");
 	torusMdl = std::make_shared<ObjFile>("data/torus.obj");
@@ -368,9 +373,11 @@ void Q1ModelScene::render(const Viewport *viewport, const View *view) {
 	float frame = sec * 10.f;
 
 	//mod
-	frame /= (float)quakeMdl->getMdl()->numframes;
-	frame -= (int)frame;
-	frame *= (float)quakeMdl->getMdl()->numframes;
+	if (quakeMdl) {
+		frame /= (float)quakeMdl->getMdl()->numframes;
+		frame -= (int)frame;
+		frame *= (float)quakeMdl->getMdl()->numframes;
+	}
 
 	swRotatef(180,0,0,1);
 	swColor3f(1,1,1);
@@ -403,7 +410,7 @@ void Q1ModelScene::render(const Viewport *viewport, const View *view) {
 	case TEX_CONTOUR:	texTarget = SW_TEXTURE_2D;	texIndex = contourTex;			break;
 	case TEX_CEL:		texTarget = SW_TEXTURE_2D;	texIndex = celTex;				break;
 	case TEX_RGB:		texTarget = SW_TEXTURE_3D;	texIndex = rgbTex;				break;
-	case TEX_DEFAULT:	texTarget = SW_TEXTURE_2D;	texIndex = quakeMdl->skin[0];	break;
+	case TEX_DEFAULT:	texTarget = SW_TEXTURE_2D;	texIndex = quakeMdl ? quakeMdl->skin[0] : texIndex;	break;
 	case TEX_NORMALIZE: texTarget = SW_TEXTURE_CUBE_MAP; texIndex = normalizeCubeMapTex; break;
 //	case TEX_NONE:default:							break;
 	}
@@ -508,7 +515,9 @@ void Q1ModelScene::render(const Viewport *viewport, const View *view) {
 	switch (modelMode) {
 	case MODEL_QUAKE:
 		swTranslatef(0,0,-20);
-		quakeMdl->DisplayInterpolate((int)frame, (int)frame + 1, frame - (int)frame);
+		if (quakeMdl) {
+			quakeMdl->DisplayInterpolate((int)frame, (int)frame + 1, frame - (int)frame);
+		}
 		break;
 	case MODEL_CUBE:
 		swScalef(40,40,40);

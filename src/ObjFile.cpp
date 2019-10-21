@@ -56,6 +56,32 @@ static const char *nextSpaceOrEndLine(const char *p, const char *buffer) {
 	return p;
 }
 
+template<typename T>
+struct ReadVector {
+	template<int i>
+	struct op {
+		static bool exec(const char* buffer, const char* &p, T& v) {
+			const char *start = p = nextNonSpace(p, buffer);
+			const char *end = p = nextSpaceOrEndLine(p, buffer);
+			char token[32];
+			int size = 31;
+			int strSize = (int)(end - start);
+			if (strSize < size) size = strSize;
+			if (size < 1) return true;
+			memcpy(token, start, size);
+			token[size] = 0;
+			vec_get<T,i>::get(v) = (float)atof(token);
+			return false;
+		}
+	};
+
+	static void read(const char* buffer, const char* &p, T& v) {
+		p = nextSpace(p, buffer);
+		Common::ForLoop<0, T::dim, op>::exec(buffer, p, v);
+		p = nextNewLine(nextEndLine(p, buffer), buffer);
+	}
+};
+
 ObjFile::ObjFile(const char *filename) 
 	: bbox(
 		box3f(
@@ -79,33 +105,17 @@ ObjFile::ObjFile(const char *filename)
 			p = nextNewLine(nextEndLine(p, buffer), buffer);
 		} else if (*p == 'v') {
 
-#define READ_VECTOR(v,dim)											\
-			p = nextSpace(p, buffer);								\
-			for (int i = 0; i < dim; i++) {							\
-				const char *start = p = nextNonSpace(p, buffer);			\
-				const char *end = p = nextSpaceOrEndLine(p, buffer);		\
-				char token[32];										\
-				int size = 31;										\
-				int strSize = (int)(end - start);					\
-				if (strSize < size) size = strSize;					\
-				if (size < 1) break;								\
-				memcpy(token, start, size);							\
-				token[size] = 0;									\
-				v.fp()[i] = (float)atof(token);						\
-			}														\
-			p = nextNewLine(nextEndLine(p, buffer), buffer);
-
 			if (p[1] == 't') {
 				vec2f v(0,0);
-				READ_VECTOR(v,2);
+				ReadVector<vec2f>::read(buffer,p,v);
 				texCoord.push_back(v);
 			} else if (p[1] == 'n') {
 				vec3f v(0,0,0);
-				READ_VECTOR(v,3);
+				ReadVector<vec3f>::read(buffer,p,v);
 				normal.push_back(v);
 			} else {
 				vec3f v(0,0,0);
-				READ_VECTOR(v,3);
+				ReadVector<vec3f>::read(buffer,p,v);
 				bbox.stretch(v);
 				vertex.push_back(v);
 			}

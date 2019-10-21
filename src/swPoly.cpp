@@ -134,7 +134,6 @@ void swTexCoord3f(float x, float y, float z) {
 
 
 void swVertex4f(float x, float y, float z, float w) {
-
 	const mat44f &projMat = getProjectionMatrix();
 	const mat44f &mdlvMat = getModelviewMatrix();
 	const mat44f &texMat = getTextureMatrix();
