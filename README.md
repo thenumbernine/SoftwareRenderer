@@ -6,7 +6,7 @@ I implemented:
 		texture coordinate generation.
 
 		'User-defined' accepts texture coordinates specified by the user via
-			the osuTexCoord() function.
+			the swTexCoord() function.
 
 		'Linear' copies the surface point into the texture coordinate.
 
@@ -17,7 +17,7 @@ I implemented:
 			point into the texture coordinates.
 
 		'Normal' maps the surface normal vector at each vertex, specified by
-			the user via the osuNormal() function, into the texture coordinates.
+			the user via the swNormal() function, into the texture coordinates.
 			This method is denoted "Cel" texture coordinate generation within
 				the demonstration application.
 
@@ -50,7 +50,7 @@ I have not yet done:
 
 	I originally intended on implementing a color matrix.
 		This matrix would transform all color tuples passed to vertices using
-		osuColor3f() calls.  I have not yet implemented it, however doing so
+		swColor3f() calls.  I have not yet implemented it, however doing so
 		would only use the same functionality as the modelview, projection,
 		and texture matrix stacks.
 
