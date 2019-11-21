@@ -164,12 +164,12 @@ void swutMainLoop() {
 				if (event.key.keysym.mod & KMOD_ALT)	swutModifiers |= SWUT_ACTIVE_ALT;
 				if (event.key.keysym.mod & KMOD_CTRL)	swutModifiers |= SWUT_ACTIVE_CTRL;
 				if (event.key.keysym.mod & KMOD_SHIFT)	swutModifiers |= SWUT_ACTIVE_SHIFT;
-#if PLATFORM_windows
+#if PLATFORM_WINDOWS
 					if (event.key.keysym.sym == SDLK_F4 && (event.key.keysym.mod & KMOD_ALT) != 0) {
 						done = true;
 					}
 #endif
-#if PLATFORM_osx
+#if PLATFORM_OSX
 					if (event.key.keysym.sym == SDLK_q && (event.key.keysym.mod & KMOD_GUI) != 0) {
 						done = true;
 					}
