@@ -138,10 +138,6 @@ void swVertex4f(float x, float y, float z, float w) {
 	const mat44f &mdlvMat = getModelviewMatrix();
 	const mat44f &texMat = getTextureMatrix();
 
-	assert(&projMat);
-	assert(&mdlvMat);
-	assert(&texMat);
-
 //coordinate
 	quatf curCoord(x,y,z,w);
 //std::cout << "world " << curCoord << std::endl;	

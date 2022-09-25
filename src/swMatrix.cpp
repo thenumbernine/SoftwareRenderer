@@ -255,7 +255,6 @@ void swScalef(float x, float y, float z) {
 	//faster scale routine:
 
 	mat44f &s = *getSelectedMatrix();
-	assert(&s);
 
 	s.x *= x;
 	s.y *= y;
@@ -282,7 +281,6 @@ void swTranslatef(float x, float y, float z) {
 	//faster translate routine:
 
 	mat44f &s = *getSelectedMatrix();
-	assert(&s);
 
 	s.w += s.x * x + s.y * y + s.z * z;
 }
