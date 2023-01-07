@@ -1,10 +1,11 @@
 #pragma once
 
+#include "Common/Meta.h"
+#include "Common/ForLoop.h"
+#include "Common/crtp_cast.h"
+
 #include <math.h>
 #include <ostream>
-
-#include <Common/Meta.h>
-#include <Common/crtp_cast.h>
 
 //vector math
 
