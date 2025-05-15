@@ -2,11 +2,22 @@ distName = 'SoftwareRenderer'
 distType = 'app'
 depends:append{'../Common'}
 
--------- copied from GLApp/buildinfo --------
--- (if you want to make more software graphics projects, maybe make a common parent class for SDLApp?)
+-------- copied from SDLApp/buildinfo --------
 
-if platform == 'msvc' 
-or platform == 'clang_win' 
+if platform == 'linux'
+or platform == 'osx'
+then
+	env:addPackages'sdl2'
+end
+
+if platform == 'mingw' then
+	local SDLLibDir = os.getenv'SDL2_DIR'..[[\i686-w64-mingw32\lib]]
+	libpaths:insert(SDLLibDir)
+	libs:append{'opengl32', 'SDL2main', 'SDL2'}
+end
+
+if platform == 'msvc'
+or platform == 'clang_win'
 then
 	dynamicLibs:append{'opengl32.lib', home..[[\bin\x64\glew32.lib]]}
 	local SDLDir = assert(os.getenv'SDL2_DIR', "make sure you define the environment variable SDL2_DIR")
@@ -14,25 +25,4 @@ then
 	dynamicLibs:insert(SDLLibDir..[[\SDL2.lib]])
 	dynamicLibs:insert(SDLLibDir..[[\SDL2main.lib]])
 	include:insert(SDLDir..[[\include]])
-end
-
-if platform == 'mingw' then
-	local SDLLibDir = os.getenv'SDL2_DIR'..[[\i686-w64-mingw32\lib]]
-	libpaths:insert(SDLLibDir) 
-	libs:append{'opengl32', 'SDL2main', 'SDL2'}
-end
-
-if platform == 'linux' then 
-	include:insert'/usr/include/SDL2'
-	libs:append{'SDL2-2.0', 'GL', 'GLU'}
-end
-
-if platform == 'osx' then
-	linkFlags = linkFlags .. ' -framework Cocoa -framework OpenGL' 
-	--dynamic
-	include:insert(home..'/include/SDL2')
-	dynamicLibs:insert(home..'/lib/libSDL2-2.0.0.dylib')
-	--static
-	--libpaths:insert(home..'/lib')
-	--libs:insert'SDL2main'
 end
